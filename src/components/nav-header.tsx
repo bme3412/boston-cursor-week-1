@@ -33,7 +33,7 @@ export function NavHeader() {
             href="/join"
             className={buttonVariants({ variant: "outline", size: "xs" })}
           >
-            Join
+            Sign In
           </Link>
         </nav>
       </div>

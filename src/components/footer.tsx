@@ -18,7 +18,7 @@ export function Footer() {
             href="/join"
             className="hover:text-foreground transition-colors"
           >
-            Join
+            Sign In
           </Link>
           <a
             href="https://www.cursorboston.com"
