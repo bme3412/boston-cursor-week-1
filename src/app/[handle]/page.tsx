@@ -27,6 +27,18 @@ import { LoomEmbed } from "@/components/loom-embed";
 import { WEEKS } from "@/data/weeks";
 import { YourProfileBadge } from "@/components/your-profile-badge";
 
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "yesterday";
+  return `${days}d ago`;
+}
+
 const EVENT_ICON_MAP: Record<EventIcon, typeof GitCommit> = {
   commit: GitCommit,
   pr: GitPullRequest,
@@ -63,21 +75,6 @@ export default async function ProfilePage({
   const recent = events.slice(0, 10);
   const grouped = groupEventsByDate(recent);
   const currentWeek = getCurrentWeek();
-
-  // Stats
-  const weeksActive = member
-    ? new Set(member.updates.map((u) => u.week)).size
-    : 0;
-  const streak = member
-    ? (() => {
-        let s = 0;
-        for (let w = currentWeek; w >= 1; w--) {
-          if (member.updates.some((u) => u.week === w)) s++;
-          else break;
-        }
-        return s;
-      })()
-    : 0;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
@@ -121,27 +118,11 @@ export default async function ProfilePage({
               {user.bio && (
                 <p className="mt-2 text-sm text-muted-foreground">{user.bio}</p>
               )}
-              {member && (
-                <p className="mt-2 text-sm leading-relaxed">
-                  {member.projectDescription}
-                </p>
-              )}
             </div>
           </div>
         </div>
 
         <div className="px-6 py-4">
-          {/* Tags */}
-          {member && member.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {member.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
           {/* Link buttons */}
           <div className="flex flex-wrap gap-2">
             <a
@@ -177,24 +158,6 @@ export default async function ProfilePage({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        {[
-          { label: "Repos", value: user.public_repos },
-          { label: "Followers", value: user.followers },
-          { label: "Weeks active", value: weeksActive },
-          { label: "Streak", value: streak > 0 ? `${streak}w` : "—" },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-lg border bg-card p-3 text-center"
-          >
-            <div className="text-lg font-bold tabular-nums">{stat.value}</div>
-            <div className="text-xs text-muted-foreground">{stat.label}</div>
-          </div>
-        ))}
       </div>
 
       {/* 6-Week Timeline */}
@@ -349,13 +312,7 @@ export default async function ProfilePage({
                           {humanizeEvent(event)}
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                          {new Date(event.created_at).toLocaleTimeString(
-                            "en-US",
-                            {
-                              hour: "numeric",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {relativeTime(event.created_at)}
                         </span>
                       </div>
                     );
