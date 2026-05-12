@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shipyard
 
-## Getting Started
+Peer discovery PM tool for the Cursor Boston Cohort 1. Browse what everyone's building, see who's shipping, and prep for Friday voting calls.
 
-First, run the development server:
+## What it does
+
+- **Cohort feed** at `/` — searchable grid of every member, sorted by who shipped most recently. Members who shipped this week get a green border.
+- **Profile pages** at `/[handle]` — GitHub data (avatar, bio, repos, followers) merged with project info, shipping log, and weekly updates. Humanized GitHub activity with icons.
+- **Weekly views** at `/week/1` through `/week/6` — full curriculum for all 6 weeks (PM Build, Comms, Vibe Marketing, Ludwitt, Startup, OSS PR). Submissions with Loom/deploy links.
+- **Self-registration** at `/join` — fill out a form, instantly appear on the feed. No PRs, no manual steps.
+- **Weekly submissions** via `POST /api/submit` — members record what they shipped each week.
+
+## Stack
+
+- Next.js 15 (App Router, TypeScript, `src/` directory)
+- Tailwind CSS + shadcn/ui
+- Sora font
+- Vercel Blob for persistence (falls back to local JSON)
+- GitHub API for profile data (no token required, token optional for higher rate limits)
+- Zod for runtime validation
+- pnpm
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Without a `BLOB_READ_WRITE_TOKEN`, the app reads from the local `src/data/cohort.json` file. The `/api/join` and `/api/submit` endpoints require the token to persist data.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Vercel
 
-## Learn More
+1. Push to GitHub
+2. Import the repo on [vercel.com/new](https://vercel.com/new)
+3. Add a Blob Store: project dashboard → Storage → Create → Blob
+4. Deploy. The `BLOB_READ_WRITE_TOKEN` env var is set automatically.
 
-To learn more about Next.js, take a look at the following resources:
+Optional: set `GITHUB_TOKEN` for higher GitHub API rate limits (unauthenticated: 60 req/hr, authenticated: 5,000 req/hr).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### `POST /api/join`
 
-## Deploy on Vercel
+Register a new cohort member.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```json
+{
+  "handle": "your-github-username",
+  "projectName": "My Project",
+  "projectDescription": "One-line description",
+  "projectUrl": "https://my-app.vercel.app",
+  "repoUrl": "https://github.com/you/repo",
+  "tags": ["devtools", "ai"]
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### `POST /api/submit`
+
+Submit a weekly update for an existing member.
+
+```json
+{
+  "handle": "your-github-username",
+  "week": 1,
+  "shipped": "Built the cohort feed, profile pages, and weekly views.",
+  "loomUrl": "https://www.loom.com/share/...",
+  "deployUrl": "https://my-app.vercel.app"
+}
+```
+
+## Project structure
+
+```
+src/
+  app/
+    page.tsx                 # Cohort feed
+    [handle]/page.tsx        # Profile page
+    week/[n]/page.tsx        # Weekly view
+    join/page.tsx            # Registration form
+    api/join/route.ts        # Join API
+    api/submit/route.ts      # Submit API
+  components/                # UI components
+  data/
+    cohort.json              # Seed data (fallback when no Blob)
+    weeks.ts                 # 6-week curriculum
+  lib/
+    data.ts                  # Data access (Blob + fallback)
+    github.ts                # GitHub API fetcher
+    types.ts                 # Zod schemas
+    events.ts                # GitHub event humanizer
+    week.ts                  # Week utilities
+```
