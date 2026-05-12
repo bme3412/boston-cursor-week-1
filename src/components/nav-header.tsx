@@ -30,12 +30,6 @@ export function NavHeader() {
             </Link>
           ))}
           <Link
-            href="/submit"
-            className={buttonVariants({ variant: "ghost", size: "xs" })}
-          >
-            Submit
-          </Link>
-          <Link
             href="/join"
             className={buttonVariants({ variant: "outline", size: "xs" })}
           >

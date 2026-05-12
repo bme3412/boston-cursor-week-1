@@ -11,6 +11,7 @@ import { CollapsibleSection } from "@/components/collapsible-section";
 import { LoomEmbed } from "@/components/loom-embed";
 import { VoteButton } from "@/components/vote-button";
 import { IdentityBar } from "@/components/identity-bar";
+import { WeekSubmitCard } from "@/components/week-submit-card";
 
 const FORMAT_LABELS = {
   vote: { label: "Vote to win", icon: Trophy },
@@ -67,6 +68,7 @@ export default async function WeekPage({
       </div>
 
       <IdentityBar />
+      <WeekSubmitCard week={weekNum} />
 
       {/* Header */}
       <div className="mb-8">
