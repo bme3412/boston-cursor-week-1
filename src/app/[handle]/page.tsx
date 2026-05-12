@@ -23,6 +23,7 @@ import { humanizeEvent, groupEventsByDate } from "@/lib/events";
 import type { EventIcon } from "@/lib/events";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { LoomEmbed } from "@/components/loom-embed";
 
 const EVENT_ICON_MAP: Record<EventIcon, typeof GitCommit> = {
   commit: GitCommit,
@@ -227,6 +228,11 @@ export default async function ProfilePage({
                       </span>
                     </div>
                     <p className="text-sm leading-relaxed">{update.shipped}</p>
+                    {update.loomUrl && (
+                      <div className="mt-3">
+                        <LoomEmbed url={update.loomUrl} />
+                      </div>
+                    )}
                     {(update.loomUrl || update.deployUrl) && (
                       <div className="flex gap-2 mt-3">
                         {update.loomUrl && (

@@ -3,6 +3,7 @@ import { Sora, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { NavHeader } from "@/components/nav-header";
 import { Footer } from "@/components/footer";
+import { IdentityProvider } from "@/components/identity-context";
 import "./globals.css";
 
 const sora = Sora({
@@ -32,9 +33,11 @@ export default function RootLayout({
       className={`${sora.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NavHeader />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <IdentityProvider>
+          <NavHeader />
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </IdentityProvider>
         <Analytics />
       </body>
     </html>

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCohort, saveCohort } from "@/lib/data";
+import { verifyPin } from "@/lib/pin";
 
 const SubmitBody = z.object({
   handle: z.string().min(1),
+  pin: z.string().min(1),
   week: z.number().min(1).max(6),
   shipped: z.string().min(1),
   loomUrl: z.string().optional(),
@@ -25,6 +27,21 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Handle not found. Join the cohort first." },
         { status: 404 }
+      );
+    }
+
+    // Verify PIN
+    if (!member.pinHash) {
+      return NextResponse.json(
+        { error: "This account was created before PINs were required. Contact an admin." },
+        { status: 403 }
+      );
+    }
+
+    if (!verifyPin(data.pin, member.pinHash)) {
+      return NextResponse.json(
+        { error: "Wrong PIN." },
+        { status: 403 }
       );
     }
 

@@ -100,3 +100,20 @@ export async function getMissingForWeek(weekNum: number): Promise<Member[]> {
     (m) => !m.updates.some((u) => u.week === weekNum)
   );
 }
+
+/** Vote tallies for a given week, sorted by most votes. */
+export async function getVoteTallies(
+  weekNum: number
+): Promise<{ handle: string; votes: number }[]> {
+  const cohort = await getCohort();
+  const weekVotes = cohort.votes.filter((v) => v.week === weekNum);
+
+  const counts = new Map<string, number>();
+  for (const v of weekVotes) {
+    counts.set(v.candidate, (counts.get(v.candidate) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([handle, votes]) => ({ handle, votes }))
+    .sort((a, b) => b.votes - a.votes);
+}

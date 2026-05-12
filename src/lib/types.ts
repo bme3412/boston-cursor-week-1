@@ -52,9 +52,21 @@ export const MemberSchema = z.object({
   tags: z.array(z.string()).default([]),
   joinedWeek: z.number().default(1),
   updates: z.array(WeeklyUpdateSchema).default([]),
+  pinHash: z.string().optional(),
 });
 
 export type Member = z.infer<typeof MemberSchema>;
+
+// ── Vote ────────────────────────────────────────────────────────────────────
+
+export const VoteSchema = z.object({
+  voter: z.string(),
+  week: z.number(),
+  candidate: z.string(),
+  votedAt: z.string(),
+});
+
+export type Vote = z.infer<typeof VoteSchema>;
 
 // ── Cohort ──────────────────────────────────────────────────────────────────
 
@@ -63,6 +75,7 @@ export const CohortSchema = z.object({
   currentWeek: z.number(),
   weekStartDate: z.string(),
   members: z.array(MemberSchema),
+  votes: z.array(VoteSchema).default([]),
 });
 
 export type Cohort = z.infer<typeof CohortSchema>;

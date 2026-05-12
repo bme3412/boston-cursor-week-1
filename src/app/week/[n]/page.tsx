@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Video, ExternalLink, Calendar, Trophy, GitMerge, Mic, GraduationCap } from "lucide-react";
-import { getWeekSubmissions, getMissingForWeek } from "@/lib/data";
+import { getWeekSubmissions, getMissingForWeek, getVoteTallies } from "@/lib/data";
 import { TOTAL_PROGRAM_WEEKS } from "@/lib/week";
 import { getWeekInfo, WEEKS } from "@/data/weeks";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CollapsibleSection } from "@/components/collapsible-section";
+import { LoomEmbed } from "@/components/loom-embed";
+import { VoteButton } from "@/components/vote-button";
+import { IdentityBar } from "@/components/identity-bar";
 
 const FORMAT_LABELS = {
   vote: { label: "Vote to win", icon: Trophy },
@@ -29,10 +32,14 @@ export default async function WeekPage({
   }
 
   const weekInfo = getWeekInfo(weekNum);
-  const [submissions, missing] = await Promise.all([
+  const [submissions, missing, tallies] = await Promise.all([
     getWeekSubmissions(weekNum),
     getMissingForWeek(weekNum),
+    getVoteTallies(weekNum),
   ]);
+
+  const tallyMap = new Map(tallies.map((t) => [t.handle, t.votes]));
+  const totalVotes = tallies.reduce((sum, t) => sum + t.votes, 0);
 
   const withLoom = submissions.filter((s) => s.loomUrl).length;
   const withDeploy = submissions.filter((s) => s.deployUrl).length;
@@ -58,6 +65,8 @@ export default async function WeekPage({
           </Link>
         ))}
       </div>
+
+      <IdentityBar />
 
       {/* Header */}
       <div className="mb-8">
@@ -154,7 +163,24 @@ export default async function WeekPage({
                   </p>
                 </div>
               </div>
-              <p className="text-sm leading-relaxed">{sub.shipped}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm leading-relaxed flex-1">{sub.shipped}</p>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-2">
+                  {(tallyMap.get(sub.member.handle) ?? 0) > 0 && (
+                    <span className="text-xs font-medium text-primary tabular-nums">
+                      {tallyMap.get(sub.member.handle)} vote{(tallyMap.get(sub.member.handle) ?? 0) !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                <VoteButton candidate={sub.member.handle} week={weekNum} />
+              </div>
+              {sub.loomUrl && (
+                <div className="mt-3">
+                  <LoomEmbed url={sub.loomUrl} />
+                </div>
+              )}
               {(sub.loomUrl || sub.deployUrl) && (
                 <div className="flex gap-2 mt-3">
                   {sub.loomUrl && (
@@ -190,6 +216,50 @@ export default async function WeekPage({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Leaderboard */}
+      {tallies.length > 0 && (
+        <>
+          <Separator className="my-6" />
+          <h2 className="text-sm font-semibold mb-3">
+            Votes ({totalVotes} cast)
+          </h2>
+          <div className="space-y-2">
+            {tallies.slice(0, 5).map((t, idx) => {
+              const member = submissions.find(
+                (s) => s.member.handle === t.handle
+              )?.member;
+              return (
+                <div
+                  key={t.handle}
+                  className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2"
+                >
+                  <span className="text-sm font-bold text-muted-foreground w-5 text-center tabular-nums">
+                    {idx + 1}
+                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://github.com/${t.handle}.png?size=32`}
+                    alt={t.handle}
+                    width={24}
+                    height={24}
+                    className="rounded-full"
+                  />
+                  <Link
+                    href={`/${t.handle}`}
+                    className="text-sm font-medium hover:underline flex-1 truncate"
+                  >
+                    {member?.projectName ?? t.handle}
+                  </Link>
+                  <span className="text-sm font-bold tabular-nums text-primary">
+                    {t.votes}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Missing */}

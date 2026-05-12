@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCohort, saveCohort } from "@/lib/data";
+import { hashPin } from "@/lib/pin";
 
 const JoinBody = z.object({
   handle: z.string().min(1),
@@ -9,6 +10,7 @@ const JoinBody = z.object({
   projectUrl: z.string().optional(),
   repoUrl: z.string().optional(),
   tags: z.array(z.string()).default([]),
+  pin: z.string().min(4).max(32),
 });
 
 export async function POST(req: Request) {
@@ -18,7 +20,6 @@ export async function POST(req: Request) {
 
     const cohort = await getCohort();
 
-    // Check for duplicate handle
     const exists = cohort.members.some(
       (m) => m.handle.toLowerCase() === data.handle.toLowerCase()
     );
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
       tags: data.tags.slice(0, 3),
       joinedWeek: 1,
       updates: [],
+      pinHash: hashPin(data.pin),
     });
 
     await saveCohort(cohort);

@@ -33,6 +33,7 @@ export function JoinForm() {
   const [projectUrl, setProjectUrl] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [pin, setPin] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -57,6 +58,7 @@ export function JoinForm() {
           ...(projectUrl.trim() && { projectUrl: projectUrl.trim() }),
           ...(repoUrl.trim() && { repoUrl: repoUrl.trim() }),
           tags,
+          pin,
         }),
       });
 
@@ -78,7 +80,7 @@ export function JoinForm() {
   }
 
   const ready =
-    handle.trim() && projectName.trim() && description.trim() && status !== "loading";
+    handle.trim() && projectName.trim() && description.trim() && pin.length >= 4 && status !== "loading";
 
   if (status === "success") {
     return (
@@ -199,6 +201,23 @@ export function JoinForm() {
             );
           })}
         </div>
+      </div>
+
+      {/* PIN */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5">
+          PIN <span className="text-destructive">*</span>
+        </label>
+        <Input
+          type="password"
+          placeholder="At least 4 characters"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          className="max-w-48"
+        />
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          You&apos;ll need this to submit weekly updates. Don&apos;t lose it.
+        </p>
       </div>
 
       {/* Error */}
