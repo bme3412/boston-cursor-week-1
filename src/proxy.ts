@@ -15,7 +15,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const gateCookie = request.cookies.get("shipyard-gate");
+  const gateCookie = request.cookies.get("launchpad-gate");
   if (gateCookie?.value === "1") {
     return NextResponse.next();
   }

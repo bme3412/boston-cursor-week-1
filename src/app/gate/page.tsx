@@ -34,7 +34,7 @@ export default function GatePage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Rocket className="size-8 text-primary mx-auto mb-3" />
-          <h1 className="text-2xl font-bold tracking-tight">Shipyard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Launchpad</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Cursor Boston &middot; Cohort 1
           </p>

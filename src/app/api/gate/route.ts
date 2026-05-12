@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set("shipyard-gate", "1", {
+  cookieStore.set("launchpad-gate", "1", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

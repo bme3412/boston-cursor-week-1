@@ -14,7 +14,7 @@ export function NavHeader() {
         >
           <Rocket className="size-5 text-primary" />
           <div>
-            <span className="text-lg font-bold tracking-tight">Shipyard</span>
+            <span className="text-lg font-bold tracking-tight">Launchpad</span>
             <span className="hidden sm:inline text-xs text-muted-foreground ml-2">
               Cursor Boston
             </span>

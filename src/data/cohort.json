@@ -5,9 +5,9 @@
   "members": [
     {
       "handle": "bme3412",
-      "projectName": "Shipyard",
+      "projectName": "Launchpad",
       "projectDescription": "Peer discovery PM tool for engineering cohorts — see what everyone is building and who's shipping.",
-      "projectUrl": "https://shipyard-cohort.vercel.app",
+      "projectUrl": "https://boston-cursor-week-1.vercel.app",
       "repoUrl": "https://github.com/bme3412/1-Project-Management",
       "tags": ["pm", "devtools", "nextjs"],
       "joinedWeek": 1,
@@ -15,7 +15,7 @@
         {
           "week": 1,
           "shipped": "Built cohort feed with search, profile pages with GitHub integration, shipping log, and Friday prep view.",
-          "deployUrl": "https://shipyard-cohort.vercel.app",
+          "deployUrl": "https://boston-cursor-week-1.vercel.app",
           "repoUrl": "https://github.com/bme3412/1-Project-Management",
           "submittedAt": "2026-05-14T22:00:00Z"
         }

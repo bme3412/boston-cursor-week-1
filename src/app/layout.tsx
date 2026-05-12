@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shipyard — Cursor Boston Cohort 1",
+  title: "Launchpad — Cursor Boston Cohort 1",
   description:
     "See what your cohort is building. Track who shipped, browse projects, and prep for Friday.",
 };
