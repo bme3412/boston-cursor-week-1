@@ -24,6 +24,7 @@ import type { EventIcon } from "@/lib/events";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { LoomEmbed } from "@/components/loom-embed";
+import { WEEKS } from "@/data/weeks";
 
 const EVENT_ICON_MAP: Record<EventIcon, typeof GitCommit> = {
   commit: GitCommit,
@@ -193,84 +194,108 @@ export default async function ProfilePage({
         ))}
       </div>
 
-      {/* Cohort content */}
+      {/* 6-Week Timeline */}
       {member ? (
-        <>
-          {/* Shipping Log */}
-          {member.updates.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-3">Shipping Log</h2>
-              <div className="space-y-3">
-                {[...member.updates].reverse().map((update, idx) => (
-                  <div
-                    key={update.week}
-                    className="rounded-lg border-l-[3px] border-l-primary border border-border bg-card p-4"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/week/${update.week}`}
-                          className="text-xs font-semibold text-primary hover:underline"
-                        >
-                          Week {update.week}
-                        </Link>
-                        {idx === 0 && (
-                          <Badge variant="default" className="text-[10px] h-4">
-                            Latest
-                          </Badge>
-                        )}
-                      </div>
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">6-Week Timeline</h2>
+          <div className="space-y-3">
+            {WEEKS.map((weekInfo) => {
+              const update = member.updates.find(
+                (u) => u.week === weekInfo.week
+              );
+              const latestWeek = member.updates.length > 0
+                ? Math.max(...member.updates.map((u) => u.week))
+                : 0;
+
+              return (
+                <div
+                  key={weekInfo.week}
+                  className={`rounded-lg border bg-card p-4 ${
+                    update
+                      ? "border-l-[3px] border-l-green-500"
+                      : "border-l-[3px] border-l-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/week/${weekInfo.week}`}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Week {weekInfo.week}
+                      </Link>
+                      <span className="text-xs text-muted-foreground">
+                        {weekInfo.theme}
+                      </span>
+                      {update && update.week === latestWeek && (
+                        <Badge variant="default" className="text-[10px] h-4">
+                          Latest
+                        </Badge>
+                      )}
+                    </div>
+                    {update && (
                       <span className="text-xs text-muted-foreground">
                         {new Date(update.submittedAt).toLocaleDateString(
                           "en-US",
                           { month: "short", day: "numeric" }
                         )}
                       </span>
-                    </div>
-                    <p className="text-sm leading-relaxed">{update.shipped}</p>
-                    {update.loomUrl && (
-                      <div className="mt-3">
-                        <LoomEmbed url={update.loomUrl} />
-                      </div>
-                    )}
-                    {(update.loomUrl || update.deployUrl) && (
-                      <div className="flex gap-2 mt-3">
-                        {update.loomUrl && (
-                          <a
-                            href={update.loomUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={buttonVariants({
-                              variant: "outline",
-                              size: "xs",
-                            })}
-                          >
-                            <Video className="size-3" />
-                            Loom
-                          </a>
-                        )}
-                        {update.deployUrl && (
-                          <a
-                            href={update.deployUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={buttonVariants({
-                              variant: "outline",
-                              size: "xs",
-                            })}
-                          >
-                            <ExternalLink className="size-3" />
-                            Demo
-                          </a>
-                        )}
-                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+
+                  {update ? (
+                    <>
+                      <p className="text-sm leading-relaxed">
+                        {update.shipped}
+                      </p>
+                      {update.loomUrl && (
+                        <div className="mt-3">
+                          <LoomEmbed url={update.loomUrl} />
+                        </div>
+                      )}
+                      {(update.loomUrl || update.deployUrl) && (
+                        <div className="flex gap-2 mt-3">
+                          {update.loomUrl && (
+                            <a
+                              href={update.loomUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "xs",
+                              })}
+                            >
+                              <Video className="size-3" />
+                              Loom
+                            </a>
+                          )}
+                          {update.deployUrl && (
+                            <a
+                              href={update.deployUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "xs",
+                              })}
+                            >
+                              <ExternalLink className="size-3" />
+                              Demo
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">
+                      No submission yet
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       ) : (
         <div className="rounded-lg border border-dashed bg-muted/30 p-5 text-sm text-muted-foreground mb-8">
           This GitHub user isn&apos;t registered in the cohort yet.
