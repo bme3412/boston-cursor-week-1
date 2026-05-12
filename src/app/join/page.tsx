@@ -7,8 +7,8 @@ export default function JoinPage() {
         Join the cohort
       </h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Fill this out and we&apos;ll add your profile to the feed. Takes 30
-        seconds.
+        Add yourself to the Cursor Boston feed. Takes 30 seconds &mdash; your
+        profile goes live instantly.
       </p>
       <JoinForm />
     </main>

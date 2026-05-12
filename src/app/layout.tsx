@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { NavHeader } from "@/components/nav-header";
+import { Footer } from "@/components/footer";
 import "./globals.css";
 
 const sora = Sora({
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <NavHeader />
         <div className="flex-1">{children}</div>
+        <Footer />
         <Analytics />
       </body>
     </html>

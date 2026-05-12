@@ -9,10 +9,15 @@ export function NavHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-bold tracking-tight shrink-0"
+          className="flex items-center gap-2 shrink-0"
         >
           <Rocket className="size-5 text-primary" />
-          Shipyard
+          <div>
+            <span className="text-lg font-bold tracking-tight">Shipyard</span>
+            <span className="hidden sm:inline text-xs text-muted-foreground ml-2">
+              Cursor Boston
+            </span>
+          </div>
         </Link>
         <nav className="flex items-center gap-1 overflow-x-auto">
           {WEEKS.map((w) => (
