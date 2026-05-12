@@ -1,0 +1,257 @@
+{
+  "programName": "Cursor Boston · Cohort 1",
+  "currentWeek": 1,
+  "weekStartDate": "2026-05-11",
+  "members": [
+    {
+      "handle": "bme3412",
+      "projectName": "Shipyard",
+      "projectDescription": "Peer discovery PM tool for engineering cohorts — see what everyone is building and who's shipping.",
+      "projectUrl": "https://shipyard-cohort.vercel.app",
+      "repoUrl": "https://github.com/bme3412/1-Project-Management",
+      "tags": ["pm", "devtools", "nextjs"],
+      "joinedWeek": 1,
+      "updates": [
+        {
+          "week": 1,
+          "shipped": "Built cohort feed with search, profile pages with GitHub integration, shipping log, and Friday prep view.",
+          "deployUrl": "https://shipyard-cohort.vercel.app",
+          "repoUrl": "https://github.com/bme3412/1-Project-Management",
+          "submittedAt": "2026-05-14T22:00:00Z"
+        }
+      ]
+    },
+    {
+      "handle": "joseph-singh-lai",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "zrledwards-cmd",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "KLootawan",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "ChrisDC82",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "dannijo119-creator",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "mylordanderson",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "Jochelle-code",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "nikiromain",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "PreszAI",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "campbell2024-renz49",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "arjun-singh2127",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "275zmb75x8-wq",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "garyrenaldomarshall-sudo",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "Roxy9289",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "9802dool",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "douglacrystal",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "charlo173",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "johnnylee20000",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "littlepuppi",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "dengziwu123",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "alaskalam",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "t-siddharth",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "meleantonio",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "nebullii",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "jonathanlittel",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "devyanisri",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "willd845-afk",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "jfleck25",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    },
+    {
+      "handle": "Lorra-V",
+      "projectName": "Untitled PM Build",
+      "projectDescription": "Week 1 project management tool — details coming soon.",
+      "tags": [],
+      "joinedWeek": 1,
+      "updates": []
+    }
+  ]
+}
