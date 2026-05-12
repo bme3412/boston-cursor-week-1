@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Rocket } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { WEEKS } from "@/data/weeks";
+import { NavUser } from "@/components/nav-user";
 
 export function NavHeader() {
   return (
@@ -29,12 +30,7 @@ export function NavHeader() {
               W{w.week}
             </Link>
           ))}
-          <Link
-            href="/join"
-            className={buttonVariants({ variant: "outline", size: "xs" })}
-          >
-            Sign In
-          </Link>
+          <NavUser />
         </nav>
       </div>
     </header>
