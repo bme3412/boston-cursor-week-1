@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ActivityIndicator } from "@/components/activity-indicator";
 import { getCurrentWeek } from "@/lib/week";
 import type { Member } from "@/lib/types";
 
-export function MemberCard({ member }: { member: Member }) {
+export function MemberCard({
+  member,
+  isYou = false,
+}: {
+  member: Member;
+  isYou?: boolean;
+}) {
   const currentWeek = getCurrentWeek();
   const shippedThisWeek = member.updates.some((u) => u.week === currentWeek);
 
@@ -13,7 +20,7 @@ export function MemberCard({ member }: { member: Member }) {
       <Card
         className={`h-full transition-all group-hover:shadow-md group-hover:border-primary/30 ${
           shippedThisWeek ? "border-l-[3px] border-l-green-500" : ""
-        }`}
+        } ${isYou ? "ring-2 ring-primary/30" : ""}`}
         size="sm"
       >
         <CardContent>
@@ -24,11 +31,18 @@ export function MemberCard({ member }: { member: Member }) {
               alt={member.handle}
               width={48}
               height={48}
-              className="rounded-full shrink-0"
+              className={`rounded-full shrink-0 ${isYou ? "ring-2 ring-primary" : ""}`}
             />
             <div className="min-w-0 flex-1">
-              <div className="truncate font-semibold text-sm">
-                {member.projectName}
+              <div className="flex items-center gap-1.5">
+                <span className="truncate font-semibold text-sm">
+                  {member.projectName}
+                </span>
+                {isYou && (
+                  <Badge variant="default" className="text-[10px] h-4 shrink-0">
+                    You
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">

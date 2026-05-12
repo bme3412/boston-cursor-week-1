@@ -4,11 +4,13 @@ import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberCard } from "@/components/member-card";
+import { useIdentity } from "@/components/identity-context";
 import type { Member } from "@/lib/types";
 
 const PAGE_SIZE = 24;
 
 export function MemberGrid({ members }: { members: Member[] }) {
+  const { identity } = useIdentity();
   const [query, setQuery] = useState("");
   const [visible, setVisible] = useState(PAGE_SIZE);
 
@@ -57,7 +59,11 @@ export function MemberGrid({ members }: { members: Member[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((m) => (
-            <MemberCard key={m.handle} member={m} />
+            <MemberCard
+              key={m.handle}
+              member={m}
+              isYou={identity?.handle.toLowerCase() === m.handle.toLowerCase()}
+            />
           ))}
         </div>
       )}

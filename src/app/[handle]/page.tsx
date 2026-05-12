@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { LoomEmbed } from "@/components/loom-embed";
 import { WEEKS } from "@/data/weeks";
+import { YourProfileBadge } from "@/components/your-profile-badge";
 
 const EVENT_ICON_MAP: Record<EventIcon, typeof GitCommit> = {
   commit: GitCommit,
@@ -88,6 +89,8 @@ export default async function ProfilePage({
         <ArrowLeft className="size-3.5" />
         Back to feed
       </Link>
+
+      <YourProfileBadge handle={handle} />
 
       {/* Hero card */}
       <div className="rounded-xl border bg-card overflow-hidden mb-6">
