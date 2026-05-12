@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { JoinForm } from "@/components/join-form";
 
@@ -11,24 +11,13 @@ export function SignInPage() {
   const { data: session } = useSession();
   const [mode, setMode] = useState<"signin" | "register">("signin");
 
+  // Already fully authenticated — redirect to home
   if (session?.user?.handle) {
+    router.push("/");
     return (
       <main className="mx-auto max-w-xl px-4 py-8">
         <div className="rounded-lg border bg-card p-8 text-center">
-          <div className="text-lg font-medium mb-1">
-            Signed in as <span className="font-bold">@{session.user.handle}</span>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            You&apos;re all set. Go back to the feed or sign out.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Button variant="outline" onClick={() => router.push("/")}>
-              Back to feed
-            </Button>
-            <Button variant="ghost" onClick={() => signOut()}>
-              Sign out
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">Redirecting...</p>
         </div>
       </main>
     );
@@ -62,14 +51,14 @@ export function SignInPage() {
     <main className="mx-auto max-w-xl px-4 py-8">
       <h1 className="text-2xl font-bold tracking-tight mb-1">Sign in</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Sign in with your GitHub account to vote, submit updates, and post to
-        the feed.
+        Sign in with your GitHub account to view the cohort feed, vote, submit
+        updates, and post.
       </p>
 
       <div className="rounded-lg border bg-card p-8 text-center">
         <Button
           size="lg"
-          onClick={() => signIn("github")}
+          onClick={() => signIn("github", { callbackUrl: "/" })}
           className="w-full sm:w-auto"
         >
           Sign in with GitHub

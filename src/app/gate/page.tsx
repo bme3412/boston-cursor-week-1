@@ -22,7 +22,7 @@ export default function GatePage() {
     });
 
     if (res.ok) {
-      router.push("/");
+      router.push("/join");
       router.refresh();
     } else {
       setStatus("error");
