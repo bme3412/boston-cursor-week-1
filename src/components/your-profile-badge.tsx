@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
 
 export function YourProfileBadge({ handle }: { handle: string }) {
@@ -20,12 +21,17 @@ export function YourProfileBadge({ handle }: { handle: string }) {
           This is how others see you
         </span>
       </div>
-      <Link
-        href="/submit"
-        className={buttonVariants({ variant: "outline", size: "xs" })}
-      >
-        Submit update
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/submit"
+          className={buttonVariants({ variant: "outline", size: "xs" })}
+        >
+          Submit update
+        </Link>
+        <Button variant="ghost" size="xs" onClick={() => signOut()}>
+          Sign out
+        </Button>
+      </div>
     </div>
   );
 }
