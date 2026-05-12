@@ -9,7 +9,7 @@ export function Footer() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            href="/"
+            href="/feed"
             className="hover:text-foreground transition-colors"
           >
             Feed

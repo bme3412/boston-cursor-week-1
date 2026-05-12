@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useIdentity } from "@/components/identity-context";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
 export function YourProfileBadge({ handle }: { handle: string }) {
-  const { identity } = useIdentity();
+  const { data: session } = useSession();
 
-  if (!identity || identity.handle.toLowerCase() !== handle.toLowerCase()) {
+  if (!session?.user?.handle || session.user.handle.toLowerCase() !== handle.toLowerCase()) {
     return null;
   }
 

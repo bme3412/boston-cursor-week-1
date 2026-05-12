@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useIdentity } from "@/components/identity-context";
+import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function WeekSubmitCard({ week }: { week: number }) {
-  const { identity } = useIdentity();
+  const { data: session } = useSession();
+  const handle = session?.user?.handle;
   const router = useRouter();
   const [shipped, setShipped] = useState("");
   const [loomUrl, setLoomUrl] = useState("");
@@ -17,10 +18,10 @@ export function WeekSubmitCard({ week }: { week: number }) {
   >("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  if (!identity) return null;
+  if (!handle) return null;
 
   async function handleSubmit() {
-    if (!identity) return;
+    if (!handle) return;
     setStatus("loading");
     setErrorMsg("");
 
@@ -29,8 +30,6 @@ export function WeekSubmitCard({ week }: { week: number }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          handle: identity.handle,
-          pin: identity.pin,
           week,
           shipped: shipped.trim(),
           ...(loomUrl.trim() && { loomUrl: loomUrl.trim() }),

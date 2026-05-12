@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -27,13 +28,12 @@ const TAG_OPTIONS = [
 
 export function JoinForm() {
   const router = useRouter();
-  const [handle, setHandle] = useState("");
+  const { data: session } = useSession();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [projectUrl, setProjectUrl] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [pin, setPin] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -44,6 +44,7 @@ export function JoinForm() {
   }
 
   async function handleSubmit() {
+    if (!session?.user?.handle) return;
     setStatus("loading");
     setErrorMsg("");
 
@@ -52,13 +53,11 @@ export function JoinForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          handle: handle.trim(),
           projectName: projectName.trim(),
           projectDescription: description.trim(),
           ...(projectUrl.trim() && { projectUrl: projectUrl.trim() }),
           ...(repoUrl.trim() && { repoUrl: repoUrl.trim() }),
           tags,
-          pin,
         }),
       });
 
@@ -71,21 +70,34 @@ export function JoinForm() {
       }
 
       setStatus("success");
-      // Redirect to their new profile after a moment
-      setTimeout(() => router.push(`/${handle.trim()}`), 1500);
+      setTimeout(() => router.push(`/${session.user.handle}`), 1500);
     } catch {
       setStatus("error");
       setErrorMsg("Network error — try again");
     }
   }
 
+  // Step 1: user must sign in with GitHub first
+  if (!session?.user?.handle) {
+    return (
+      <div className="rounded-lg border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground mb-4">
+          First, sign in with GitHub so we know who you are.
+        </p>
+        <Button onClick={() => signIn("github")}>
+          Sign in with GitHub
+        </Button>
+      </div>
+    );
+  }
+
   const ready =
-    handle.trim() && projectName.trim() && description.trim() && pin.length >= 4 && status !== "loading";
+    projectName.trim() && description.trim() && status !== "loading";
 
   if (status === "success") {
     return (
       <div className="rounded-lg border bg-card p-8 text-center">
-        <div className="text-2xl mb-2">You're in.</div>
+        <div className="text-2xl mb-2">You&apos;re in.</div>
         <p className="text-sm text-muted-foreground">
           Redirecting to your profile...
         </p>
@@ -95,34 +107,22 @@ export function JoinForm() {
 
   return (
     <div className="space-y-5">
-      {/* Handle */}
-      <div>
-        <label className="block text-sm font-medium mb-1.5">
-          GitHub username <span className="text-destructive">*</span>
-        </label>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">@</span>
-          <Input
-            placeholder="your-handle"
-            value={handle}
-            onChange={(e) => setHandle(e.target.value.trim())}
-          />
+      {/* Signed in indicator */}
+      <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://github.com/${session.user.handle}.png?size=48`}
+          alt=""
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+        <div>
+          <p className="text-sm font-medium">@{session.user.handle}</p>
+          <p className="text-xs text-muted-foreground">
+            Signed in via GitHub
+          </p>
         </div>
-        {handle && (
-          <div className="mt-2 flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`https://github.com/${handle}.png?size=48`}
-              alt=""
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <span className="text-xs text-muted-foreground">
-              Looks right?
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Project name */}
@@ -201,23 +201,6 @@ export function JoinForm() {
             );
           })}
         </div>
-      </div>
-
-      {/* PIN */}
-      <div>
-        <label className="block text-sm font-medium mb-1.5">
-          PIN <span className="text-destructive">*</span>
-        </label>
-        <Input
-          type="password"
-          placeholder="At least 4 characters"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          className="max-w-48"
-        />
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          You&apos;ll need this to submit weekly updates. Don&apos;t lose it.
-        </p>
       </div>
 
       {/* Error */}

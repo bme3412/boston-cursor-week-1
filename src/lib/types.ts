@@ -80,6 +80,60 @@ export const CohortSchema = z.object({
 
 export type Cohort = z.infer<typeof CohortSchema>;
 
+// ── Reaction ────────────────────────────────────────────────────────────────
+
+export const ReactionSchema = z.object({
+  week: z.number(),
+  handle: z.string(), // submission author (target)
+  emoji: z.enum(["fire", "rocket", "heart", "clap"]),
+  reactor: z.string(), // who reacted
+  reactedAt: z.string(),
+});
+
+export type Reaction = z.infer<typeof ReactionSchema>;
+
+export const ReactionsStoreSchema = z.object({
+  reactions: z.array(ReactionSchema).default([]),
+});
+
+export type ReactionsStore = z.infer<typeof ReactionsStoreSchema>;
+
+// ── Comment ─────────────────────────────────────────────────────────────────
+
+export const CommentSchema = z.object({
+  id: z.string(),
+  week: z.number(),
+  author: z.string(),
+  text: z.string().min(1).max(500),
+  createdAt: z.string(),
+});
+
+export type Comment = z.infer<typeof CommentSchema>;
+
+export const CommentsStoreSchema = z.object({
+  comments: z.array(CommentSchema).default([]),
+});
+
+export type CommentsStore = z.infer<typeof CommentsStoreSchema>;
+
+// ── Feed Post ───────────────────────────────────────────────────────────────
+
+export const FeedPostSchema = z.object({
+  id: z.string(),
+  author: z.string(),
+  text: z.string().min(1).max(500),
+  link: z.string().optional(),
+  createdAt: z.string(),
+});
+
+export type FeedPost = z.infer<typeof FeedPostSchema>;
+
+export const FeedStoreSchema = z.object({
+  posts: z.array(FeedPostSchema).default([]),
+});
+
+export type FeedStore = z.infer<typeof FeedStoreSchema>;
+
 // ── Composed Profile ─────────────────────────────────────────────────────────
 
 export type Profile = {

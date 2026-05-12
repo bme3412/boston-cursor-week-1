@@ -30,6 +30,12 @@ export function NavHeader() {
               W{w.week}
             </Link>
           ))}
+          <Link
+            href="/feed"
+            className={buttonVariants({ variant: "ghost", size: "xs" })}
+          >
+            Feed
+          </Link>
           <NavUser />
         </nav>
       </div>

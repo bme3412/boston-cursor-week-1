@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useIdentity } from "@/components/identity-context";
+import { useSession } from "next-auth/react";
 import { IdentityBar } from "@/components/identity-bar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { getCurrentWeek } from "@/lib/week";
 
 export function SubmitForm() {
   const currentWeek = getCurrentWeek();
-  const { identity } = useIdentity();
+  const { data: session } = useSession();
+  const handle = session?.user?.handle;
   const [week, setWeek] = useState(currentWeek);
   const [shipped, setShipped] = useState("");
   const [loomUrl, setLoomUrl] = useState("");
@@ -20,7 +21,7 @@ export function SubmitForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit() {
-    if (!identity) return;
+    if (!handle) return;
     setStatus("loading");
     setErrorMsg("");
 
@@ -29,8 +30,6 @@ export function SubmitForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          handle: identity.handle,
-          pin: identity.pin,
           week,
           shipped: shipped.trim(),
           ...(loomUrl.trim() && { loomUrl: loomUrl.trim() }),
@@ -53,14 +52,14 @@ export function SubmitForm() {
     }
   }
 
-  const ready = identity && shipped.trim() && status !== "loading";
+  const ready = handle && shipped.trim() && status !== "loading";
 
   if (status === "success") {
     return (
       <div className="rounded-lg border bg-card p-8 text-center">
         <div className="text-2xl mb-2">Shipped.</div>
         <p className="text-sm text-muted-foreground mb-4">
-          Week {week} update saved for @{identity?.handle}.
+          Week {week} update saved for @{handle}.
         </p>
         <div className="flex justify-center gap-3">
           <Button
@@ -76,7 +75,7 @@ export function SubmitForm() {
           </Button>
           <Button
             onClick={() =>
-              (window.location.href = `/${identity?.handle}`)
+              (window.location.href = `/${handle}`)
             }
           >
             View profile
@@ -90,13 +89,13 @@ export function SubmitForm() {
     <div className="space-y-5">
       <IdentityBar />
 
-      {!identity && (
+      {!handle && (
         <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
           Sign in above to submit your weekly update.
         </div>
       )}
 
-      {identity && (
+      {handle && (
         <>
           {/* Week selector */}
           <div>

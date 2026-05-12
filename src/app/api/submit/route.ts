@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCohort, saveCohort } from "@/lib/data";
-import { verifyPin } from "@/lib/pin";
+import { getSessionHandle } from "@/lib/auth";
 
 const SubmitBody = z.object({
-  handle: z.string().min(1),
-  pin: z.string().min(1),
   week: z.number().min(1).max(6),
   shipped: z.string().min(1),
   loomUrl: z.string().optional(),
@@ -15,33 +13,23 @@ const SubmitBody = z.object({
 
 export async function POST(req: Request) {
   try {
+    const handle = await getSessionHandle();
+    if (!handle) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
+
     const body = await req.json();
     const data = SubmitBody.parse(body);
 
     const cohort = await getCohort();
 
     const member = cohort.members.find(
-      (m) => m.handle.toLowerCase() === data.handle.toLowerCase()
+      (m) => m.handle.toLowerCase() === handle.toLowerCase()
     );
     if (!member) {
       return NextResponse.json(
         { error: "Handle not found. Join the cohort first." },
         { status: 404 }
-      );
-    }
-
-    // Verify PIN
-    if (!member.pinHash) {
-      return NextResponse.json(
-        { error: "This account was created before PINs were required. Contact an admin." },
-        { status: 403 }
-      );
-    }
-
-    if (!verifyPin(data.pin, member.pinHash)) {
-      return NextResponse.json(
-        { error: "Wrong PIN." },
-        { status: 403 }
       );
     }
 
@@ -64,7 +52,7 @@ export async function POST(req: Request) {
 
     await saveCohort(cohort);
 
-    return NextResponse.json({ ok: true, handle: data.handle, week: data.week });
+    return NextResponse.json({ ok: true, handle, week: data.week });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid request";
     return NextResponse.json({ error: message }, { status: 400 });

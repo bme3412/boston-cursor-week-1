@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Video, ExternalLink, Calendar, Trophy, GitMerge, Mic, GraduationCap } from "lucide-react";
-import { getWeekSubmissions, getMissingForWeek, getVoteTallies } from "@/lib/data";
+import { getWeekSubmissions, getMissingForWeek, getVoteTallies, getReactionsForWeek, getCommentsForWeek } from "@/lib/data";
 import { TOTAL_PROGRAM_WEEKS } from "@/lib/week";
 import { getWeekInfo, WEEKS } from "@/data/weeks";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import { LoomEmbed } from "@/components/loom-embed";
 import { VoteButton } from "@/components/vote-button";
 import { IdentityBar } from "@/components/identity-bar";
 import { WeekSubmitCard } from "@/components/week-submit-card";
+import { ReactionBar } from "@/components/reaction-bar";
+import { CommentFeed } from "@/components/comment-feed";
 
 const FORMAT_LABELS = {
   vote: { label: "Vote to win", icon: Trophy },
@@ -33,10 +35,12 @@ export default async function WeekPage({
   }
 
   const weekInfo = getWeekInfo(weekNum);
-  const [submissions, missing, tallies] = await Promise.all([
+  const [submissions, missing, tallies, weekReactions, weekComments] = await Promise.all([
     getWeekSubmissions(weekNum),
     getMissingForWeek(weekNum),
     getVoteTallies(weekNum),
+    getReactionsForWeek(weekNum),
+    getCommentsForWeek(weekNum),
   ]);
 
   const tallyMap = new Map(tallies.map((t) => [t.handle, t.votes]));
@@ -178,6 +182,15 @@ export default async function WeekPage({
                 </div>
                 <VoteButton candidate={sub.member.handle} week={weekNum} />
               </div>
+              <div className="mt-2">
+                <ReactionBar
+                  week={weekNum}
+                  handle={sub.member.handle}
+                  reactions={weekReactions.filter(
+                    (r) => r.handle.toLowerCase() === sub.member.handle.toLowerCase()
+                  )}
+                />
+              </div>
               {sub.loomUrl && (
                 <div className="mt-3">
                   <LoomEmbed url={sub.loomUrl} />
@@ -295,6 +308,10 @@ export default async function WeekPage({
           </CollapsibleSection>
         </>
       )}
+
+      {/* Discussion */}
+      <Separator className="my-6" />
+      <CommentFeed week={weekNum} initialComments={weekComments} />
     </main>
   );
 }

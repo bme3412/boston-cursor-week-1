@@ -1,6 +1,6 @@
 import { head, put } from "@vercel/blob";
-import { CohortSchema } from "./types";
-import type { Cohort, Member } from "./types";
+import { CohortSchema, ReactionsStoreSchema, CommentsStoreSchema, FeedStoreSchema } from "./types";
+import type { Cohort, Member, Reaction, ReactionsStore, Comment, CommentsStore, FeedPost, FeedStore } from "./types";
 import cohortFallback from "@/data/cohort.json";
 
 const BLOB_KEY = "cohort.json";
@@ -116,4 +116,114 @@ export async function getVoteTallies(
   return Array.from(counts.entries())
     .map(([handle, votes]) => ({ handle, votes }))
     .sort((a, b) => b.votes - a.votes);
+}
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+
+const REACTIONS_KEY = "reactions.json";
+
+export async function getReactions(): Promise<ReactionsStore> {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const info = await head(REACTIONS_KEY, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      const res = await fetch(info.url, { cache: "no-store" });
+      const raw = await res.json();
+      return ReactionsStoreSchema.parse(raw);
+    } catch {
+      // Blob doesn't exist yet
+    }
+  }
+  return { reactions: [] };
+}
+
+export async function saveReactions(store: ReactionsStore): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not set");
+  await put(REACTIONS_KEY, JSON.stringify(store, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    token,
+  });
+}
+
+export async function getReactionsForWeek(week: number): Promise<Reaction[]> {
+  const store = await getReactions();
+  return store.reactions.filter((r) => r.week === week);
+}
+
+// ── Comments ──────────────────────────────────────────────────────────────────
+
+const COMMENTS_KEY = "comments.json";
+
+export async function getComments(): Promise<CommentsStore> {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const info = await head(COMMENTS_KEY, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      const res = await fetch(info.url, { cache: "no-store" });
+      const raw = await res.json();
+      return CommentsStoreSchema.parse(raw);
+    } catch {
+      // Blob doesn't exist yet
+    }
+  }
+  return { comments: [] };
+}
+
+export async function saveComments(store: CommentsStore): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not set");
+  await put(COMMENTS_KEY, JSON.stringify(store, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    token,
+  });
+}
+
+export async function getCommentsForWeek(week: number): Promise<Comment[]> {
+  const store = await getComments();
+  return store.comments
+    .filter((c) => c.week === week)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+// ── Feed ──────────────────────────────────────────────────────────────────────
+
+const FEED_KEY = "feed.json";
+
+export async function getFeed(): Promise<FeedStore> {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const info = await head(FEED_KEY, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      const res = await fetch(info.url, { cache: "no-store" });
+      const raw = await res.json();
+      return FeedStoreSchema.parse(raw);
+    } catch {
+      // Blob doesn't exist yet
+    }
+  }
+  return { posts: [] };
+}
+
+export async function saveFeed(store: FeedStore): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not set");
+  await put(FEED_KEY, JSON.stringify(store, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    token,
+  });
+}
+
+export async function getFeedPosts(): Promise<FeedPost[]> {
+  const store = await getFeed();
+  return store.posts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

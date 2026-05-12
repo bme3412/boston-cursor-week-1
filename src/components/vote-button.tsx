@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useIdentity } from "@/components/identity-context";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export function VoteButton({
@@ -11,14 +11,15 @@ export function VoteButton({
   candidate: string;
   week: number;
 }) {
-  const { identity } = useIdentity();
+  const { data: session } = useSession();
+  const handle = session?.user?.handle;
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function castVote() {
-    if (!identity) return;
+    if (!handle) return;
     setStatus("loading");
     setErrorMsg("");
 
@@ -26,12 +27,7 @@ export function VoteButton({
       const res = await fetch("/api/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          voter: identity.handle,
-          pin: identity.pin,
-          week,
-          candidate,
-        }),
+        body: JSON.stringify({ week, candidate }),
       });
 
       const data = await res.json();
@@ -54,13 +50,13 @@ export function VoteButton({
     );
   }
 
-  if (!identity) {
+  if (!handle) {
     return (
       <span className="text-xs text-muted-foreground">Sign in to vote</span>
     );
   }
 
-  if (identity.handle.toLowerCase() === candidate.toLowerCase()) {
+  if (handle.toLowerCase() === candidate.toLowerCase()) {
     return null;
   }
 

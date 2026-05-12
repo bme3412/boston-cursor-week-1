@@ -1,28 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useIdentity } from "@/components/identity-context";
+import { useSession } from "next-auth/react";
 import { buttonVariants } from "@/components/ui/button";
 
 export function NavUser() {
-  const { identity } = useIdentity();
+  const { data: session } = useSession();
 
-  if (identity) {
+  if (session?.user?.handle) {
     return (
       <Link
-        href={`/${identity.handle}`}
+        href={`/${session.user.handle}`}
         className="flex items-center gap-1.5 rounded-full border px-2 py-1 hover:bg-accent transition-colors"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://github.com/${identity.handle}.png?size=48`}
+          src={`https://github.com/${session.user.handle}.png?size=48`}
           alt=""
           width={20}
           height={20}
           className="rounded-full"
         />
         <span className="text-xs font-medium hidden sm:inline">
-          {identity.handle}
+          {session.user.handle}
         </span>
       </Link>
     );
