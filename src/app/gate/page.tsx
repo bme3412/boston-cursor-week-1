@@ -22,8 +22,7 @@ export default function GatePage() {
     });
 
     if (res.ok) {
-      router.push("/join");
-      router.refresh();
+      window.location.href = "/join";
     } else {
       setStatus("error");
     }
