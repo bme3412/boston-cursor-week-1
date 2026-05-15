@@ -6,10 +6,17 @@ import { Button } from "@/components/ui/button";
 import { MemberCard } from "@/components/member-card";
 import { useSession } from "next-auth/react";
 import type { Member } from "@/lib/types";
+import type { PRStatusEntry } from "@/lib/pr-source";
 
 const PAGE_SIZE = 24;
 
-export function MemberGrid({ members }: { members: Member[] }) {
+export function MemberGrid({
+  members,
+  prStatusByHandle = {},
+}: {
+  members: Member[];
+  prStatusByHandle?: Record<string, PRStatusEntry>;
+}) {
   const { data: session } = useSession();
   const handle = session?.user?.handle;
   const [query, setQuery] = useState("");
@@ -64,6 +71,7 @@ export function MemberGrid({ members }: { members: Member[] }) {
               key={m.handle}
               member={m}
               isYou={handle?.toLowerCase() === m.handle.toLowerCase()}
+              prStatus={prStatusByHandle[m.handle.toLowerCase()]}
             />
           ))}
         </div>

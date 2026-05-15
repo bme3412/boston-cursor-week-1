@@ -25,7 +25,9 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { LoomEmbed } from "@/components/loom-embed";
 import { WEEKS } from "@/data/weeks";
-import { YourProfileBadge } from "@/components/your-profile-badge";
+import { EditProfileCard } from "@/components/edit-profile-card";
+import { PRStatusBadge } from "@/components/pr-status-badge";
+import { getPRStatusForWeek } from "@/lib/pr-source";
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -75,6 +77,8 @@ export default async function ProfilePage({
   const recent = events.slice(0, 10);
   const grouped = groupEventsByDate(recent);
   const currentWeek = getCurrentWeek();
+  const prMap = await getPRStatusForWeek(currentWeek);
+  const myPR = prMap.get(handle.toLowerCase());
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6">
@@ -87,7 +91,15 @@ export default async function ProfilePage({
         Back to feed
       </Link>
 
-      <YourProfileBadge handle={handle} />
+      <EditProfileCard
+        handle={handle}
+        initial={{
+          projectName: member?.projectName ?? "",
+          projectDescription: member?.projectDescription ?? "",
+          projectUrl: member?.projectUrl,
+          repoUrl: member?.repoUrl,
+        }}
+      />
 
       {/* Hero card */}
       <div className="rounded-xl border bg-card overflow-hidden mb-6">
@@ -102,18 +114,9 @@ export default async function ProfilePage({
               className="rounded-full shrink-0 ring-4 ring-card shadow-lg"
             />
             <div className="min-w-0 pt-1">
-              {member ? (
-                <h1 className="text-2xl font-bold tracking-tight mb-0.5">
-                  {member.projectName}
-                </h1>
-              ) : (
-                <h1 className="text-2xl font-bold tracking-tight mb-0.5">
-                  {user.name ?? user.login}
-                </h1>
-              )}
-              <p className="font-medium text-foreground/80">
-                {member ? (user.name ?? user.login) : null}
-              </p>
+              <h1 className="text-2xl font-bold tracking-tight mb-0.5">
+                {user.name ?? user.login}
+              </h1>
               <p className="text-sm text-muted-foreground">@{user.login}</p>
               {user.bio && (
                 <p className="mt-2 text-sm text-muted-foreground">{user.bio}</p>
@@ -176,16 +179,17 @@ export default async function ProfilePage({
               return (
                 <div
                   key={weekInfo.week}
-                  className={`rounded-lg border bg-card p-4 ${
+                  id={`week-${weekInfo.week}`}
+                  className={`scroll-mt-20 rounded-lg border bg-card p-4 ${
                     update
                       ? "border-l-[3px] border-l-green-500"
                       : "border-l-[3px] border-l-transparent"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Link
-                        href={`/week/${weekInfo.week}`}
+                        href={`/week/${weekInfo.week}#submission-${handle.toLowerCase()}`}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
                         Week {weekInfo.week}
@@ -193,6 +197,9 @@ export default async function ProfilePage({
                       <span className="text-xs text-muted-foreground">
                         {weekInfo.theme}
                       </span>
+                      {weekInfo.week === currentWeek && myPR && myPR.status !== "none" && (
+                        <PRStatusBadge entry={myPR} size="xs" />
+                      )}
                       {update && update.week === latestWeek && (
                         <Badge variant="default" className="text-[10px] h-4">
                           Latest
@@ -219,8 +226,8 @@ export default async function ProfilePage({
                           <LoomEmbed url={update.loomUrl} />
                         </div>
                       )}
-                      {(update.loomUrl || update.deployUrl) && (
-                        <div className="flex gap-2 mt-3">
+                      {(update.loomUrl || update.deployUrl || update.repoUrl) && (
+                        <div className="flex gap-2 mt-3 flex-wrap">
                           {update.loomUrl && (
                             <a
                               href={update.loomUrl}
@@ -247,6 +254,20 @@ export default async function ProfilePage({
                             >
                               <ExternalLink className="size-3" />
                               Demo
+                            </a>
+                          )}
+                          {update.repoUrl && (
+                            <a
+                              href={update.repoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "xs",
+                              })}
+                            >
+                              <Code2 className="size-3" />
+                              Source
                             </a>
                           )}
                         </div>

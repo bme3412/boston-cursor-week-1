@@ -2,18 +2,26 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ActivityIndicator } from "@/components/activity-indicator";
-import { getCurrentWeek } from "@/lib/week";
+import { PRStatusBadge } from "@/components/pr-status-badge";
+import type { PRStatusEntry } from "@/lib/pr-source";
 import type { Member } from "@/lib/types";
 
 export function MemberCard({
   member,
   isYou = false,
+  prStatus,
 }: {
   member: Member;
   isYou?: boolean;
+  prStatus?: PRStatusEntry;
 }) {
-  const currentWeek = getCurrentWeek();
-  const shippedThisWeek = member.updates.some((u) => u.week === currentWeek);
+  const shippedThisWeek = !!prStatus && prStatus.status !== "none";
+  // Treat legacy stub entries ("Untitled PM Build" / "Week N project...") as empty.
+  const isStub =
+    member.projectName === "Untitled PM Build" ||
+    member.projectDescription.startsWith("Week ") ||
+    member.projectDescription.trim().length === 0;
+  const hasProject = !isStub;
 
   return (
     <Link href={`/${member.handle}`} className="block group">
@@ -36,7 +44,7 @@ export function MemberCard({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="truncate font-semibold text-sm">
-                  {member.projectName}
+                  {hasProject ? member.projectName : `@${member.handle}`}
                 </span>
                 {isYou && (
                   <Badge variant="default" className="text-[10px] h-4 shrink-0">
@@ -44,17 +52,23 @@ export function MemberCard({
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   @{member.handle}
                 </span>
-                <ActivityIndicator member={member} />
+                {prStatus ? (
+                  <PRStatusBadge entry={prStatus} size="xs" />
+                ) : (
+                  <ActivityIndicator member={member} />
+                )}
               </div>
             </div>
           </div>
-          <p className="line-clamp-2 text-sm text-muted-foreground leading-relaxed">
-            {member.projectDescription}
-          </p>
+          {hasProject && (
+            <p className="line-clamp-2 text-sm text-muted-foreground leading-relaxed">
+              {member.projectDescription}
+            </p>
+          )}
         </CardContent>
       </Card>
     </Link>

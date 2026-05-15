@@ -36,6 +36,7 @@ export async function saveCohort(cohort: Cohort): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
     token,
   });
 }
@@ -43,8 +44,8 @@ export async function saveCohort(cohort: Cohort): Promise<void> {
 function stubMember(handle: string, currentWeek: number): Member {
   return {
     handle,
-    projectName: "Untitled PM Build",
-    projectDescription: `Week ${currentWeek} project — details coming soon.`,
+    projectName: handle,
+    projectDescription: "",
     tags: [],
     joinedWeek: currentWeek,
     updates: [],
@@ -52,10 +53,10 @@ function stubMember(handle: string, currentWeek: number): Member {
 }
 
 /**
- * Merge cohort.json/Blob members with the live GitHub roster.
- * GitHub handles are the source of truth for membership; cohort.json
- * data (projectName, updates, etc.) is preserved for matching handles.
- * Cohort-only members (not yet in the upstream roster) are kept too.
+ * Merge cohort.json/Blob members with the live GitHub roster. New handles get
+ * neutral stubs; existing manual entries are preserved verbatim. We do not
+ * pull project titles, descriptions, scores, or submissions from upstream —
+ * that's the member's own work to share.
  */
 async function getMergedMembers(): Promise<Member[]> {
   const [cohort, handles] = await Promise.all([
@@ -98,25 +99,20 @@ export async function getMembersByActivity(): Promise<Member[]> {
   });
 }
 
+export type WeekSubmission = {
+  member: Member;
+  shipped: string;
+  submittedAt: string;
+  loomUrl?: string;
+  deployUrl?: string;
+  repoUrl?: string;
+};
+
 export async function getWeekSubmissions(
   weekNum: number
-): Promise<
-  {
-    member: Member;
-    shipped: string;
-    submittedAt: string;
-    loomUrl?: string;
-    deployUrl?: string;
-  }[]
-> {
+): Promise<WeekSubmission[]> {
   const members = await getMergedMembers();
-  const results: {
-    member: Member;
-    shipped: string;
-    submittedAt: string;
-    loomUrl?: string;
-    deployUrl?: string;
-  }[] = [];
+  const results: WeekSubmission[] = [];
 
   for (const member of members) {
     const update = member.updates.find((u) => u.week === weekNum);
@@ -127,6 +123,7 @@ export async function getWeekSubmissions(
         submittedAt: update.submittedAt,
         loomUrl: update.loomUrl,
         deployUrl: update.deployUrl,
+        repoUrl: update.repoUrl,
       });
     }
   }
@@ -187,6 +184,7 @@ export async function saveReactions(store: ReactionsStore): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
     token,
   });
 }
@@ -223,6 +221,7 @@ export async function saveComments(store: CommentsStore): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
     token,
   });
 }
@@ -261,6 +260,7 @@ export async function saveFeed(store: FeedStore): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
     token,
   });
 }

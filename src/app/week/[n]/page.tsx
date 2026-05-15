@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Video, ExternalLink, Calendar, Trophy, GitMerge, Mic, GraduationCap } from "lucide-react";
+import { Video, ExternalLink, Calendar, Trophy, GitMerge, Mic, GraduationCap, Code2 } from "lucide-react";
 import { getWeekSubmissions, getMissingForWeek, getVoteTallies, getReactionsForWeek, getCommentsForWeek } from "@/lib/data";
 import { TOTAL_PROGRAM_WEEKS } from "@/lib/week";
 import { getWeekInfo, WEEKS } from "@/data/weeks";
@@ -14,6 +14,8 @@ import { IdentityBar } from "@/components/identity-bar";
 import { WeekSubmitCard } from "@/components/week-submit-card";
 import { ReactionBar } from "@/components/reaction-bar";
 import { CommentFeed } from "@/components/comment-feed";
+import { PRStatusBadge } from "@/components/pr-status-badge";
+import { getPRStatusForWeek } from "@/lib/pr-source";
 
 const FORMAT_LABELS = {
   vote: { label: "Vote to win", icon: Trophy },
@@ -35,12 +37,13 @@ export default async function WeekPage({
   }
 
   const weekInfo = getWeekInfo(weekNum);
-  const [submissions, missing, tallies, weekReactions, weekComments] = await Promise.all([
+  const [submissions, missing, tallies, weekReactions, weekComments, prMap] = await Promise.all([
     getWeekSubmissions(weekNum),
     getMissingForWeek(weekNum),
     getVoteTallies(weekNum),
     getReactionsForWeek(weekNum),
     getCommentsForWeek(weekNum),
+    getPRStatusForWeek(weekNum),
   ]);
 
   const tallyMap = new Map(tallies.map((t) => [t.handle, t.votes]));
@@ -48,6 +51,18 @@ export default async function WeekPage({
 
   const withLoom = submissions.filter((s) => s.loomUrl).length;
   const withDeploy = submissions.filter((s) => s.deployUrl).length;
+
+  // Filter out members who already have a PR upstream (they've effectively shipped).
+  const missingFiltered = missing.filter(
+    (m) => !prMap.has(m.handle.toLowerCase())
+  );
+
+  let prMerged = 0;
+  let prOpen = 0;
+  for (const entry of prMap.values()) {
+    if (entry.status === "merged") prMerged++;
+    else if (entry.status === "open" || entry.status === "draft") prOpen++;
+  }
 
   const fmt = weekInfo ? FORMAT_LABELS[weekInfo.format] : null;
   const FormatIcon = fmt?.icon ?? Trophy;
@@ -114,11 +129,19 @@ export default async function WeekPage({
       </div>
 
       {/* Submission stats */}
-      {submissions.length > 0 && (
+      {(submissions.length > 0 || prMerged + prOpen > 0) && (
         <div className="flex flex-wrap gap-2 mb-4">
-          <Badge variant="secondary">
-            {submissions.length} submission{submissions.length !== 1 ? "s" : ""}
-          </Badge>
+          {submissions.length > 0 && (
+            <Badge variant="secondary">
+              {submissions.length} submission{submissions.length !== 1 ? "s" : ""}
+            </Badge>
+          )}
+          {prMerged > 0 && (
+            <Badge variant="secondary">{prMerged} merged PR{prMerged !== 1 ? "s" : ""}</Badge>
+          )}
+          {prOpen > 0 && (
+            <Badge variant="secondary">{prOpen} open PR{prOpen !== 1 ? "s" : ""}</Badge>
+          )}
           {withLoom > 0 && (
             <Badge variant="secondary">{withLoom} with Loom</Badge>
           )}
@@ -138,9 +161,10 @@ export default async function WeekPage({
       ) : (
         <div className="space-y-3">
           {submissions.map((sub) => (
-            <div
+            <article
               key={sub.member.handle}
-              className="rounded-lg border bg-card p-4"
+              id={`submission-${sub.member.handle.toLowerCase()}`}
+              className="rounded-lg border bg-card p-4 scroll-mt-20"
             >
               <div className="flex items-center gap-3 mb-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -152,14 +176,25 @@ export default async function WeekPage({
                   className="rounded-full"
                 />
                 <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/${sub.member.handle}`}
-                    className="font-semibold text-sm hover:underline"
-                  >
-                    {sub.member.projectName}
-                  </Link>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Link
+                      href={`/${sub.member.handle}#week-${weekNum}`}
+                      className="font-semibold text-sm hover:underline"
+                    >
+                      {sub.member.projectName}
+                    </Link>
+                    {(() => {
+                      const entry = prMap.get(sub.member.handle.toLowerCase());
+                      return entry && entry.status !== "none" ? (
+                        <PRStatusBadge entry={entry} size="xs" />
+                      ) : null;
+                    })()}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    @{sub.member.handle} &middot;{" "}
+                    <Link href={`/${sub.member.handle}`} className="hover:underline">
+                      @{sub.member.handle}
+                    </Link>
+                    {" · "}
                     {new Date(sub.submittedAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -169,6 +204,15 @@ export default async function WeekPage({
                   </p>
                 </div>
               </div>
+              {sub.member.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {sub.member.tags.slice(0, 5).map((tag) => (
+                    <Badge key={tag} variant="outline" className="text-[10px] py-0">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <p className="text-sm leading-relaxed flex-1">{sub.shipped}</p>
               </div>
@@ -196,8 +240,8 @@ export default async function WeekPage({
                   <LoomEmbed url={sub.loomUrl} />
                 </div>
               )}
-              {(sub.loomUrl || sub.deployUrl) && (
-                <div className="flex gap-2 mt-3">
+              {(sub.loomUrl || sub.deployUrl || sub.repoUrl) && (
+                <div className="flex gap-2 mt-3 flex-wrap">
                   {sub.loomUrl && (
                     <a
                       href={sub.loomUrl}
@@ -226,9 +270,23 @@ export default async function WeekPage({
                       Demo
                     </a>
                   )}
+                  {sub.repoUrl && (
+                    <a
+                      href={sub.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "xs",
+                      })}
+                    >
+                      <Code2 className="size-3" />
+                      Source
+                    </a>
+                  )}
                 </div>
               )}
-            </div>
+            </article>
           ))}
         </div>
       )}
@@ -278,16 +336,16 @@ export default async function WeekPage({
       )}
 
       {/* Missing */}
-      {missing.length > 0 && (
+      {missingFiltered.length > 0 && (
         <>
           <Separator className="my-6" />
           <CollapsibleSection
             label="Haven't submitted yet"
-            count={missing.length}
+            count={missingFiltered.length}
             variant="warning"
           >
             <div className="flex flex-wrap gap-2">
-              {missing.map((m) => (
+              {missingFiltered.map((m) => (
                 <Link
                   key={m.handle}
                   href={`/${m.handle}`}
