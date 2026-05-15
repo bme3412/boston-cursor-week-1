@@ -49,6 +49,7 @@ function stubMember(handle: string, currentWeek: number): Member {
     projectName: handle,
     projectDescription: "",
     tags: [],
+    flair: [],
     joinedWeek: currentWeek,
     updates: [],
   };

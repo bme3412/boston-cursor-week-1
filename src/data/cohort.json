@@ -9,6 +9,10 @@
       "projectDescription": "Peer discovery PM tool for engineering cohorts — see what everyone is building and who's shipping.",
       "projectUrl": "https://boston-cursor-week-1.vercel.app",
       "repoUrl": "https://github.com/bme3412/1-Project-Management",
+      "bio": "PM-turned-builder shipping fast in Boston.",
+      "location": "Boston, MA",
+      "currentlyBuilding": "Profile flair + customization for the cohort",
+      "flair": ["shipping", "boston", "ai", "coffee"],
       "tags": ["pm", "devtools", "nextjs"],
       "joinedWeek": 1,
       "updates": [

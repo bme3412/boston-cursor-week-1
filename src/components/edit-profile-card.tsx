@@ -6,6 +6,13 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  FLAIR_CATALOG,
+  FLAIR_COLOR_CLASSES,
+  FLAIR_GROUP_LABEL,
+  FLAIR_GROUP_ORDER,
+  MAX_FLAIR,
+} from "@/lib/flair";
 
 type Props = {
   handle: string;
@@ -14,6 +21,10 @@ type Props = {
     projectDescription: string;
     projectUrl?: string;
     repoUrl?: string;
+    bio?: string;
+    location?: string;
+    currentlyBuilding?: string;
+    flair?: string[];
   };
 };
 
@@ -35,11 +46,27 @@ export function EditProfileCard({ handle, initial }: Props) {
   );
   const [projectUrl, setProjectUrl] = useState(initial.projectUrl ?? "");
   const [repoUrl, setRepoUrl] = useState(initial.repoUrl ?? "");
+  const [bio, setBio] = useState(initial.bio ?? "");
+  const [location, setLocation] = useState(initial.location ?? "");
+  const [currentlyBuilding, setCurrentlyBuilding] = useState(
+    initial.currentlyBuilding ?? ""
+  );
+  const [selectedFlair, setSelectedFlair] = useState<string[]>(
+    initial.flair ?? []
+  );
 
   const isOwner =
     session?.user?.handle?.toLowerCase() === handle.toLowerCase();
 
   if (!isOwner) return null;
+
+  function toggleFlair(id: string) {
+    setSelectedFlair((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= MAX_FLAIR) return prev;
+      return [...prev, id];
+    });
+  }
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +81,10 @@ export function EditProfileCard({ handle, initial }: Props) {
           projectDescription: projectDescription.trim(),
           projectUrl: projectUrl.trim(),
           repoUrl: repoUrl.trim(),
+          bio: bio.trim(),
+          location: location.trim(),
+          currentlyBuilding: currentlyBuilding.trim(),
+          flair: selectedFlair,
         }),
       });
       const data = await res.json();
@@ -153,6 +184,102 @@ export function EditProfileCard({ handle, initial }: Props) {
               />
             </div>
           </div>
+
+          {/* About: bio / location / currently building */}
+          <div>
+            <label className="block text-xs font-medium mb-1">
+              Bio
+            </label>
+            <textarea
+              maxLength={140}
+              rows={2}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="A one-liner about you — shown under your name."
+              className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {bio.length}/140
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1">
+                Location
+              </label>
+              <input
+                type="text"
+                maxLength={60}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Cambridge, MA"
+                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">
+                Currently building
+              </label>
+              <input
+                type="text"
+                maxLength={120}
+                value={currentlyBuilding}
+                onChange={(e) => setCurrentlyBuilding(e.target.value)}
+                placeholder="Adding flair to /[handle]"
+                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          {/* Flair picker */}
+          <div>
+            <div className="flex items-baseline justify-between mb-1">
+              <label className="block text-xs font-medium">Flair</label>
+              <span className="text-[10px] text-muted-foreground">
+                {selectedFlair.length}/{MAX_FLAIR} — shows on your profile
+              </span>
+            </div>
+            <div className="space-y-2 rounded-md border bg-background/50 p-3">
+              {FLAIR_GROUP_ORDER.map((group) => {
+                const items = FLAIR_CATALOG.filter((f) => f.group === group);
+                if (items.length === 0) return null;
+                return (
+                  <div key={group}>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                      {FLAIR_GROUP_LABEL[group]}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((f) => {
+                        const isSelected = selectedFlair.includes(f.id);
+                        const atCap =
+                          !isSelected && selectedFlair.length >= MAX_FLAIR;
+                        return (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => toggleFlair(f.id)}
+                            disabled={atCap}
+                            aria-pressed={isSelected}
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset transition-colors ${
+                              isSelected
+                                ? FLAIR_COLOR_CLASSES[f.color]
+                                : atCap
+                                ? "bg-muted text-muted-foreground/50 ring-border/50 cursor-not-allowed"
+                                : "bg-muted text-muted-foreground ring-border hover:bg-muted/80"
+                            }`}
+                          >
+                            <span aria-hidden>{f.emoji}</span>
+                            {f.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {error && (
             <p className="text-xs text-red-600">{error}</p>
           )}

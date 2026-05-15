@@ -15,9 +15,12 @@ import {
   Circle,
   Video,
   Globe,
+  MapPin,
+  Hammer,
 } from "lucide-react";
 import { fetchUser, fetchRecentEvents } from "@/lib/github";
 import { getMember } from "@/lib/data";
+import { FlairPill } from "@/components/flair-pill";
 import { getCurrentWeek } from "@/lib/week";
 import { humanizeEvent, groupEventsByDate } from "@/lib/events";
 import type { EventIcon } from "@/lib/events";
@@ -98,6 +101,10 @@ export default async function ProfilePage({
           projectDescription: member?.projectDescription ?? "",
           projectUrl: member?.projectUrl,
           repoUrl: member?.repoUrl,
+          bio: member?.bio,
+          location: member?.location,
+          currentlyBuilding: member?.currentlyBuilding,
+          flair: member?.flair,
         }}
       />
 
@@ -118,8 +125,33 @@ export default async function ProfilePage({
                 {user.name ?? user.login}
               </h1>
               <p className="text-sm text-muted-foreground">@{user.login}</p>
-              {user.bio && (
-                <p className="mt-2 text-sm text-muted-foreground">{user.bio}</p>
+              {(member?.bio || user.bio) && (
+                <p className="mt-2 text-sm text-muted-foreground italic">
+                  {member?.bio || user.bio}
+                </p>
+              )}
+              {(member?.location || member?.currentlyBuilding) && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  {member?.location && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-3.5" />
+                      {member.location}
+                    </span>
+                  )}
+                  {member?.currentlyBuilding && (
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      <Hammer className="size-3.5" />
+                      Building: {member.currentlyBuilding}
+                    </span>
+                  )}
+                </div>
+              )}
+              {member?.flair && member.flair.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {member.flair.map((id) => (
+                    <FlairPill key={id} id={id} />
+                  ))}
+                </div>
               )}
             </div>
           </div>

@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       projectUrl: data.projectUrl,
       repoUrl: data.repoUrl,
       tags: data.tags.slice(0, 3),
+      flair: [],
       joinedWeek: 1,
       updates: [],
     });

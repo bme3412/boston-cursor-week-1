@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCohort, saveCohort } from "@/lib/data";
 import { getSessionHandle } from "@/lib/auth";
+import { MAX_FLAIR, normalizeFlair } from "@/lib/flair";
 
 const ProfileBody = z.object({
   projectName: z.string().min(1).max(80),
   projectDescription: z.string().min(1).max(280),
   projectUrl: z.string().url().optional().or(z.literal("")),
   repoUrl: z.string().url().optional().or(z.literal("")),
+  bio: z.string().max(140).optional().or(z.literal("")),
+  location: z.string().max(60).optional().or(z.literal("")),
+  currentlyBuilding: z.string().max(120).optional().or(z.literal("")),
+  flair: z.array(z.string()).max(MAX_FLAIR).optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -26,6 +31,10 @@ export async function PATCH(req: Request) {
 
     const projectUrl = data.projectUrl || undefined;
     const repoUrl = data.repoUrl || undefined;
+    const bio = data.bio?.trim() || undefined;
+    const location = data.location?.trim() || undefined;
+    const currentlyBuilding = data.currentlyBuilding?.trim() || undefined;
+    const flair = normalizeFlair(data.flair ?? []);
 
     if (idx >= 0) {
       cohort.members[idx] = {
@@ -34,6 +43,10 @@ export async function PATCH(req: Request) {
         projectDescription: data.projectDescription,
         projectUrl,
         repoUrl,
+        bio,
+        location,
+        currentlyBuilding,
+        flair,
       };
     } else {
       cohort.members.push({
@@ -42,6 +55,10 @@ export async function PATCH(req: Request) {
         projectDescription: data.projectDescription,
         projectUrl,
         repoUrl,
+        bio,
+        location,
+        currentlyBuilding,
+        flair,
         tags: [],
         joinedWeek: cohort.currentWeek,
         updates: [],
