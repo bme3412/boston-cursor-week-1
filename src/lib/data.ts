@@ -2,6 +2,7 @@ import { head, put } from "@vercel/blob";
 import { CohortSchema, ReactionsStoreSchema, CommentsStoreSchema, FeedStoreSchema } from "./types";
 import type { Cohort, Member, Reaction, ReactionsStore, Comment, CommentsStore, FeedPost, FeedStore } from "./types";
 import cohortFallback from "@/data/cohort.json";
+import { fetchCohortHandles } from "./cohort-source";
 
 const BLOB_KEY = "cohort.json";
 
@@ -39,16 +40,57 @@ export async function saveCohort(cohort: Cohort): Promise<void> {
   });
 }
 
+function stubMember(handle: string, currentWeek: number): Member {
+  return {
+    handle,
+    projectName: "Untitled PM Build",
+    projectDescription: `Week ${currentWeek} project — details coming soon.`,
+    tags: [],
+    joinedWeek: currentWeek,
+    updates: [],
+  };
+}
+
+/**
+ * Merge cohort.json/Blob members with the live GitHub roster.
+ * GitHub handles are the source of truth for membership; cohort.json
+ * data (projectName, updates, etc.) is preserved for matching handles.
+ * Cohort-only members (not yet in the upstream roster) are kept too.
+ */
+async function getMergedMembers(): Promise<Member[]> {
+  const [cohort, handles] = await Promise.all([
+    getCohort(),
+    fetchCohortHandles(),
+  ]);
+
+  const byHandle = new Map(
+    cohort.members.map((m) => [m.handle.toLowerCase(), m])
+  );
+  const seen = new Set<string>();
+  const merged: Member[] = [];
+
+  for (const h of handles) {
+    const key = h.toLowerCase();
+    seen.add(key);
+    merged.push(byHandle.get(key) ?? stubMember(h, cohort.currentWeek));
+  }
+  for (const m of cohort.members) {
+    if (!seen.has(m.handle.toLowerCase())) merged.push(m);
+  }
+
+  return merged;
+}
+
 export async function getMember(handle: string): Promise<Member | undefined> {
-  const cohort = await getCohort();
-  return cohort.members.find(
+  const members = await getMergedMembers();
+  return members.find(
     (m) => m.handle.toLowerCase() === handle.toLowerCase()
   );
 }
 
 export async function getMembersByActivity(): Promise<Member[]> {
-  const cohort = await getCohort();
-  return [...cohort.members].sort((a, b) => {
+  const members = await getMergedMembers();
+  return members.sort((a, b) => {
     const aLatest = a.updates.at(-1)?.submittedAt ?? "";
     const bLatest = b.updates.at(-1)?.submittedAt ?? "";
     if (bLatest !== aLatest) return bLatest.localeCompare(aLatest);
@@ -67,7 +109,7 @@ export async function getWeekSubmissions(
     deployUrl?: string;
   }[]
 > {
-  const cohort = await getCohort();
+  const members = await getMergedMembers();
   const results: {
     member: Member;
     shipped: string;
@@ -76,7 +118,7 @@ export async function getWeekSubmissions(
     deployUrl?: string;
   }[] = [];
 
-  for (const member of cohort.members) {
+  for (const member of members) {
     const update = member.updates.find((u) => u.week === weekNum);
     if (update) {
       results.push({
@@ -95,8 +137,8 @@ export async function getWeekSubmissions(
 }
 
 export async function getMissingForWeek(weekNum: number): Promise<Member[]> {
-  const cohort = await getCohort();
-  return cohort.members.filter(
+  const members = await getMergedMembers();
+  return members.filter(
     (m) => !m.updates.some((u) => u.week === weekNum)
   );
 }

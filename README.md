@@ -1,4 +1,4 @@
-# Shipyard
+# Launchpad
 
 Peer discovery PM tool for Cursor Boston Cohort 1. 100 builders, 6 weeks, shipping from Boston.
 
@@ -7,14 +7,16 @@ Browse what everyone's building, submit weekly updates with Loom videos, vote fo
 ## Features
 
 - **Cohort feed** (`/`) — searchable grid of every member, sorted by who shipped most recently. Green border = shipped this week.
+- **Live roster sync** — the member list is fetched from `pydata-2026-submissions/` subdirectories in the upstream [`rogerSuperBuilderAlpha/cursor-boston`](https://github.com/rogerSuperBuilderAlpha/cursor-boston) repo on each page load (ISR-cached 1 hr). Manual project metadata in `cohort.json` is preserved for matching handles.
 - **Profile pages** (`/[handle]`) — GitHub data merged with project info, shipping log with embedded Loom videos, stats row, humanized GitHub activity.
 - **Weekly views** (`/week/1` – `/week/6`) — full 6-week curriculum with submissions, Loom embeds, deploy links, voting, and leaderboard.
 - **Self-registration** (`/join`) — fill out a form with a PIN, instantly appear on the feed.
 - **Weekly submissions** (`/submit`) — sign in once, then submit what you shipped, Loom URL, and deploy URL.
 - **Voting** — one vote per member per week. Sign in, click "Vote" on any submission. Leaderboard updates live.
-- **PIN security** — salted SHA-256 hashed PINs. No one can impersonate you or submit on your behalf.
+- **Cohort gate** (`/gate`) — password-protected entry; full lockout when signed out.
+- **GitHub sign-in** — NextAuth v5 + GitHub OAuth. Required to view content.
+- **PIN security** — salted SHA-256 hashed PINs for write actions.
 - **Loom embeds** — Loom share URLs auto-embed as 16:9 video players on profiles and weekly views.
-- **Identity persistence** — sign in with handle + PIN once, stored in localStorage. Voting and submissions are single-click after that.
 
 ## 6-Week Curriculum
 
@@ -29,34 +31,53 @@ Browse what everyone's building, submit weekly updates with Loom videos, vote fo
 
 ## Stack
 
-- Next.js 15 (App Router, TypeScript, `src/` directory)
-- Tailwind CSS + shadcn/ui
+- Next.js 16 (App Router, TypeScript, `src/` directory, Turbopack)
+- React 19
+- NextAuth.js v5 (GitHub OAuth)
+- Tailwind CSS v4 + shadcn/ui
 - Sora + JetBrains Mono fonts
 - Vercel Blob for persistence (falls back to local JSON in dev)
 - Vercel Analytics
-- GitHub API for profile data
+- GitHub API for profile data + live cohort roster
 - Zod for runtime validation
-- pnpm
+- npm
 
 ## Getting started
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Without `BLOB_READ_WRITE_TOKEN`, the app reads from the local `src/data/cohort.json` file. Write endpoints (`/api/join`, `/api/submit`, `/api/vote`) require the token.
+### Environment variables
+
+Create `.env.local`:
+
+```
+AUTH_URL=http://localhost:3000
+AUTH_SECRET=<openssl rand -base64 32>
+AUTH_GITHUB_ID=<dev OAuth App client ID>
+AUTH_GITHUB_SECRET=<dev OAuth App client secret>
+COHORT_PASSWORD=<gate password>
+# Optional — raises GitHub rate limit from 60/hr to 5,000/hr
+GITHUB_TOKEN=<fine-grained PAT, public_repo read>
+# Optional — enables Blob persistence for writes
+BLOB_READ_WRITE_TOKEN=<from Vercel Blob>
+```
+
+Create two GitHub OAuth Apps at https://github.com/settings/developers — one for local (`http://localhost:3000/api/auth/callback/github`) and one for production (`https://<your-domain>/api/auth/callback/github`). A single OAuth App supports only one callback URL.
+
+Without `BLOB_READ_WRITE_TOKEN`, the app reads from `src/data/cohort.json`. Write endpoints (`/api/join`, `/api/submit`, `/api/vote`) require the token.
 
 ## Deploy to Vercel
 
 1. Push to GitHub
 2. Import the repo at [vercel.com/new](https://vercel.com/new)
-3. Add a Blob Store: project dashboard → Storage → Create → Blob
-4. Deploy — `BLOB_READ_WRITE_TOKEN` is set automatically
-
-Optional: set `GITHUB_TOKEN` for higher GitHub API rate limits (60/hr unauthenticated → 5,000/hr authenticated).
+3. Add a Blob Store: project dashboard → Storage → Create → Blob (sets `BLOB_READ_WRITE_TOKEN` automatically)
+4. Set env vars in Vercel dashboard: `AUTH_URL` (your prod URL), `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `COHORT_PASSWORD`, optionally `GITHUB_TOKEN`
+5. Deploy
 
 ## API
 
@@ -108,13 +129,22 @@ src/
     page.tsx                 # Cohort feed
     [handle]/page.tsx        # Profile page
     week/[n]/page.tsx        # Weekly view + voting
-    join/page.tsx             # Registration form
+    join/page.tsx            # Registration form
     submit/page.tsx          # Weekly update form
+    gate/page.tsx            # Cohort password gate
     api/
+      auth/[...nextauth]/    # NextAuth handler
+      gate/route.ts          # Cohort password check
+      signout/route.ts       # Sign-out endpoint
       join/route.ts          # Registration endpoint
       submit/route.ts        # Submission endpoint
       vote/route.ts          # Voting endpoint
+      reactions/route.ts     # Emoji reactions
+      comments/route.ts      # Comments
+      feed/route.ts          # Feed posts
+  auth.ts                    # NextAuth config (GitHub provider)
   components/
+    session-provider.tsx     # NextAuth client wrapper
     identity-context.tsx     # Client-side identity (handle + PIN)
     identity-bar.tsx         # Sign-in bar
     vote-button.tsx          # One-click voting
@@ -126,11 +156,12 @@ src/
     nav-header.tsx           # Navigation
     footer.tsx               # Footer
   data/
-    cohort.json              # Seed data (Blob fallback)
+    cohort.json              # Seed data + manual project metadata
     weeks.ts                 # 6-week curriculum
   lib/
-    data.ts                  # Data access (Blob + fallback)
-    github.ts                # GitHub API fetcher
+    data.ts                  # Data access (merges live GitHub roster + Blob/JSON)
+    cohort-source.ts         # Live cohort roster fetcher (upstream repo)
+    github.ts                # GitHub user/events fetcher
     types.ts                 # Zod schemas
     events.ts                # GitHub event humanizer
     pin.ts                   # PIN hashing + verification
