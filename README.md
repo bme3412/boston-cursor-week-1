@@ -8,8 +8,10 @@ Browse what everyone's building, submit weekly updates with Loom videos, vote fo
 
 - **Cohort feed** (`/`) — searchable grid of every member, sorted by who shipped most recently. Green border = shipped this week.
 - **Live roster sync** — the member list is fetched from `pydata-2026-submissions/` subdirectories in the upstream [`rogerSuperBuilderAlpha/cursor-boston`](https://github.com/rogerSuperBuilderAlpha/cursor-boston) repo on each page load (ISR-cached 1 hr). Manual project metadata in `cohort.json` is preserved for matching handles.
+- **Live PR shipping tracker** — weekly views surface submissions from upstream PRs even when the author hasn't filled out the in-app form. PR status (open / merged) shown as a badge.
 - **Profile pages** (`/[handle]`) — GitHub data merged with project info, shipping log with embedded Loom videos, stats row, humanized GitHub activity.
 - **Weekly views** (`/week/1` – `/week/6`) — full 6-week curriculum with submissions, Loom embeds, deploy links, voting, and leaderboard.
+- **Social feed** (`/feed`) — short-form posts from cohort members. Auto-polls every 20s, hover for absolute timestamp, delete your own posts, rate-limited (1 post / 10s, 20 / 24h per author).
 - **Self-registration** (`/join`) — fill out a form with a PIN, instantly appear on the feed.
 - **Weekly submissions** (`/submit`) — sign in once, then submit what you shipped, Loom URL, and deploy URL.
 - **Voting** — one vote per member per week. Sign in, click "Vote" on any submission. Leaderboard updates live.
@@ -17,6 +19,7 @@ Browse what everyone's building, submit weekly updates with Loom videos, vote fo
 - **GitHub sign-in** — NextAuth v5 + GitHub OAuth. Required to view content.
 - **PIN security** — salted SHA-256 hashed PINs for write actions.
 - **Loom embeds** — Loom share URLs auto-embed as 16:9 video players on profiles and weekly views.
+- **Boston time everywhere** — all user-facing timestamps are pinned to `America/New_York` so server-rendered (UTC) and client output match.
 
 ## 6-Week Curriculum
 
@@ -121,6 +124,27 @@ Without `BLOB_READ_WRITE_TOKEN`, the app reads from `src/data/cohort.json`. Writ
 
 One vote per member per week. You can change your vote. Can't vote for yourself.
 
+### `GET /api/feed` — List feed posts
+
+Returns `{ posts: FeedPost[] }`, newest first. Sent with `Cache-Control: no-store`; the client polls this every 20s.
+
+### `POST /api/feed` — Create a feed post
+
+Requires GitHub sign-in. Author must be a cohort member.
+
+```json
+{
+  "text": "Shipped the v1 today.",
+  "link": "https://my-app.vercel.app"
+}
+```
+
+Rate-limited per author: **1 post / 10s** (burst) and **20 posts / 24h**. Returns `429` with a `Retry-After` header when over the limit.
+
+### `DELETE /api/feed/[id]` — Delete your own feed post
+
+Requires GitHub sign-in. `403` if the post is not yours; `404` if it does not exist.
+
 ## Project structure
 
 ```
@@ -141,7 +165,8 @@ src/
       vote/route.ts          # Voting endpoint
       reactions/route.ts     # Emoji reactions
       comments/route.ts      # Comments
-      feed/route.ts          # Feed posts
+      feed/route.ts          # Feed: GET (poll) + POST (rate-limited)
+      feed/[id]/route.ts     # Feed: DELETE own post
   auth.ts                    # NextAuth config (GitHub provider)
   components/
     session-provider.tsx     # NextAuth client wrapper
@@ -159,11 +184,13 @@ src/
     cohort.json              # Seed data + manual project metadata
     weeks.ts                 # 6-week curriculum
   lib/
-    data.ts                  # Data access (merges live GitHub roster + Blob/JSON)
+    data.ts                  # Data access (merges live GitHub roster + Blob/JSON, synthesizes PR-only submissions)
     cohort-source.ts         # Live cohort roster fetcher (upstream repo)
+    pr-source.ts             # Live upstream PR fetcher per week
     github.ts                # GitHub user/events fetcher
     types.ts                 # Zod schemas
     events.ts                # GitHub event humanizer
     pin.ts                   # PIN hashing + verification
     week.ts                  # Week utilities
+    utils.ts                 # cn(), relativeTime(), absoluteTime() (cohort-TZ pinned)
 ```
