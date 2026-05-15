@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
-import { relativeTime } from "@/lib/utils";
+import { absoluteTime, relativeTime } from "@/lib/utils";
 import type { FeedPost } from "@/lib/types";
+
+const POLL_INTERVAL_MS = 20_000;
+const TICK_INTERVAL_MS = 60_000;
 
 export function FeedBoard({
   initialPosts,
@@ -22,10 +25,69 @@ export function FeedBoard({
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Tick state forces re-render so relativeTime() stays fresh without refresh.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), TICK_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  // Poll the server for new posts so other users' posts show up automatically.
+  // Pauses while the tab is hidden, and skips while a post submission is in flight
+  // (so we don't blow away an optimistic update).
+  const inFlightRef = useRef(false);
+  useEffect(() => {
+    async function refresh() {
+      if (inFlightRef.current) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      try {
+        const res = await fetch("/api/feed", { cache: "no-store" });
+        if (!res.ok) return;
+        const { posts: latest } = (await res.json()) as { posts: FeedPost[] };
+        setPosts((prev) => {
+          // Server is authoritative, but preserve any optimistic posts the
+          // server hasn't seen yet (race between POST returning and next poll).
+          const serverIds = new Set(latest.map((p) => p.id));
+          const localOnly = prev.filter((p) => !serverIds.has(p.id));
+          return [...localOnly, ...latest].sort((a, b) =>
+            b.createdAt.localeCompare(a.createdAt)
+          );
+        });
+      } catch {
+        // network errors are non-fatal; try again next tick
+      }
+    }
+    const id = setInterval(refresh, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  async function deletePost(id: string) {
+    if (!confirm("Delete this post?")) return;
+    const prev = posts;
+    // Optimistic remove
+    setPosts((curr) => curr.filter((p) => p.id !== id));
+    inFlightRef.current = true;
+    try {
+      const res = await fetch(`/api/feed/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // Roll back
+        setPosts(prev);
+        alert(data.error ?? "Failed to delete");
+      }
+    } catch {
+      setPosts(prev);
+      alert("Network error");
+    } finally {
+      inFlightRef.current = false;
+    }
+  }
+
   async function submitPost() {
     if (!handle || !text.trim()) return;
     setStatus("loading");
     setErrorMsg("");
+    inFlightRef.current = true;
 
     try {
       const res = await fetch("/api/feed", {
@@ -51,6 +113,8 @@ export function FeedBoard({
     } catch {
       setStatus("error");
       setErrorMsg("Network error");
+    } finally {
+      inFlightRef.current = false;
     }
   }
 
@@ -132,10 +196,25 @@ export function FeedBoard({
                   >
                     @{post.author}
                   </Link>
-                  <p className="text-xs text-muted-foreground">
+                  <time
+                    dateTime={post.createdAt}
+                    title={absoluteTime(post.createdAt)}
+                    className="block text-xs text-muted-foreground cursor-help"
+                  >
                     {relativeTime(post.createdAt)}
-                  </p>
+                  </time>
                 </div>
+                {handle?.toLowerCase() === post.author.toLowerCase() && (
+                  <button
+                    type="button"
+                    onClick={() => deletePost(post.id)}
+                    aria-label="Delete post"
+                    title="Delete post"
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1 -m-1 rounded"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                )}
               </div>
               <p className="text-sm leading-relaxed">{post.text}</p>
               {post.link && (
