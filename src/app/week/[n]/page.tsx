@@ -200,6 +200,7 @@ export default async function WeekPage({
                       day: "numeric",
                       hour: "numeric",
                       minute: "2-digit",
+                      timeZone: "America/New_York",
                     })}
                   </p>
                 </div>

@@ -210,7 +210,11 @@ export default async function ProfilePage({
                       <span className="text-xs text-muted-foreground">
                         {new Date(update.submittedAt).toLocaleDateString(
                           "en-US",
-                          { month: "short", day: "numeric" }
+                          {
+                            month: "short",
+                            day: "numeric",
+                            timeZone: "America/New_York",
+                          }
                         )}
                       </span>
                     )}

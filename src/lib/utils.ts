@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Cohort timezone. We pin all human-readable timestamps to Eastern so that
+ * server-rendered HTML on Vercel (UTC) matches what users see in Boston, and
+ * so SSR + client hydration produce identical strings.
+ */
+const COHORT_TZ = "America/New_York";
+
 export function relativeTime(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -14,10 +21,11 @@ export function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  // Older than a week → show the date. Fixed locale so SSR + client agree.
+  // Older than a week → show the date in cohort time so SSR + client agree.
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    timeZone: COHORT_TZ,
   });
 }
 
@@ -30,5 +38,6 @@ export function absoluteTime(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
     timeZoneName: "short",
+    timeZone: COHORT_TZ,
   });
 }

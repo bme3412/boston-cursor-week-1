@@ -17,7 +17,11 @@ export function getWeekDateRange(weekNum: number): string {
   end.setDate(end.getDate() + 6);
 
   const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "America/New_York",
+    });
   return `${fmt(start)} – ${fmt(end)}`;
 }
 

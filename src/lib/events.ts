@@ -52,6 +52,7 @@ export function groupEventsByDate(
     const date = new Date(event.created_at).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
+      timeZone: "America/New_York",
     });
     const existing = groups.get(date);
     if (existing) {
