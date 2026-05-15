@@ -213,9 +213,15 @@ export default async function WeekPage({
                   ))}
                 </div>
               )}
-              <div className="flex items-center justify-between">
-                <p className="text-sm leading-relaxed flex-1">{sub.shipped}</p>
-              </div>
+              {sub.shipped ? (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm leading-relaxed flex-1">{sub.shipped}</p>
+                </div>
+              ) : sub.fromPR && sub.prEntry?.pr ? (
+                <p className="text-sm leading-relaxed italic text-muted-foreground">
+                  Shipped via PR: {sub.prEntry.pr.title}
+                </p>
+              ) : null}
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2">
                   {(tallyMap.get(sub.member.handle) ?? 0) > 0 && (
@@ -281,7 +287,7 @@ export default async function WeekPage({
                       })}
                     >
                       <Code2 className="size-3" />
-                      Source
+                      {sub.fromPR ? "View PR" : "Source"}
                     </a>
                   )}
                 </div>

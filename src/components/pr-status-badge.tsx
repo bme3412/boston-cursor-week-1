@@ -1,3 +1,5 @@
+"use client";
+
 import { Check, GitPullRequest, FileText, Circle } from "lucide-react";
 import type { PRStatus, PRStatusEntry } from "@/lib/pr-source";
 
@@ -28,10 +30,13 @@ export function PRStatusBadge({
   entry,
   size = "sm",
   showWhenNone = true,
+  asLink = true,
 }: {
   entry: PRStatusEntry;
   size?: "xs" | "sm";
   showWhenNone?: boolean;
+  /** When false, render as a plain badge (no anchor). Use when nested inside another link. */
+  asLink?: boolean;
 }) {
   if (entry.status === "none" && !showWhenNone) return null;
   const { label, classes, Icon } = COPY[entry.status];
@@ -53,7 +58,7 @@ export function PRStatusBadge({
     </span>
   );
 
-  if (entry.pr) {
+  if (entry.pr && asLink) {
     return (
       <a
         href={entry.pr.htmlUrl}

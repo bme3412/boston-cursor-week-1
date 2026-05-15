@@ -57,7 +57,7 @@ export function MemberCard({
                   @{member.handle}
                 </span>
                 {prStatus ? (
-                  <PRStatusBadge entry={prStatus} size="xs" />
+                  <PRStatusBadge entry={prStatus} size="xs" asLink={false} />
                 ) : (
                   <ActivityIndicator member={member} />
                 )}

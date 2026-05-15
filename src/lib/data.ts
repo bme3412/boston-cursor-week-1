@@ -3,6 +3,8 @@ import { CohortSchema, ReactionsStoreSchema, CommentsStoreSchema, FeedStoreSchem
 import type { Cohort, Member, Reaction, ReactionsStore, Comment, CommentsStore, FeedPost, FeedStore } from "./types";
 import cohortFallback from "@/data/cohort.json";
 import { fetchCohortHandles } from "./cohort-source";
+import { getPRStatusForWeek } from "./pr-source";
+import type { PRStatusEntry } from "./pr-source";
 
 const BLOB_KEY = "cohort.json";
 
@@ -106,16 +108,28 @@ export type WeekSubmission = {
   loomUrl?: string;
   deployUrl?: string;
   repoUrl?: string;
+  /** True when this entry was synthesized from an upstream PR (no in-app form submission). */
+  fromPR?: boolean;
+  /** Matching upstream PR entry, if any. Populated for both form-submitted and PR-only entries. */
+  prEntry?: PRStatusEntry;
 };
 
 export async function getWeekSubmissions(
   weekNum: number
 ): Promise<WeekSubmission[]> {
-  const members = await getMergedMembers();
+  const [members, prMap] = await Promise.all([
+    getMergedMembers(),
+    getPRStatusForWeek(weekNum),
+  ]);
   const results: WeekSubmission[] = [];
+  const seen = new Set<string>();
 
   for (const member of members) {
+    const key = member.handle.toLowerCase();
     const update = member.updates.find((u) => u.week === weekNum);
+    const prEntry = prMap.get(key);
+    const matched = prEntry && prEntry.status !== "none" ? prEntry : undefined;
+
     if (update) {
       results.push({
         member,
@@ -124,8 +138,34 @@ export async function getWeekSubmissions(
         loomUrl: update.loomUrl,
         deployUrl: update.deployUrl,
         repoUrl: update.repoUrl,
+        prEntry: matched,
       });
+      seen.add(key);
+    } else if (matched && matched.pr) {
+      results.push({
+        member,
+        shipped: "",
+        submittedAt: matched.pr.createdAt,
+        repoUrl: matched.pr.htmlUrl,
+        fromPR: true,
+        prEntry: matched,
+      });
+      seen.add(key);
     }
+  }
+
+  // Catch PR authors who aren't (yet) in the merged roster.
+  for (const [key, entry] of prMap.entries()) {
+    if (seen.has(key)) continue;
+    if (!entry.pr) continue;
+    results.push({
+      member: stubMember(entry.pr.user, weekNum),
+      shipped: "",
+      submittedAt: entry.pr.createdAt,
+      repoUrl: entry.pr.htmlUrl,
+      fromPR: true,
+      prEntry: entry,
+    });
   }
 
   return results.sort((a, b) =>
