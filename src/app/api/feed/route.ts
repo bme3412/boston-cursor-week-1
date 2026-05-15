@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCohort, getFeed, getFeedPosts, saveFeed } from "@/lib/data";
+import {
+  getCohort,
+  getFeed,
+  getFeedCommentCounts,
+  getFeedPosts,
+  saveFeed,
+} from "@/lib/data";
 import { getSessionHandle } from "@/lib/auth";
 import type { FeedPost } from "@/lib/types";
 
@@ -54,9 +60,12 @@ function checkRateLimit(
 }
 
 export async function GET() {
-  const posts = await getFeedPosts();
+  const [posts, commentCounts] = await Promise.all([
+    getFeedPosts(),
+    getFeedCommentCounts(),
+  ]);
   return NextResponse.json(
-    { posts },
+    { posts, commentCounts },
     // Belt-and-suspenders: GET handlers aren't cached by default in Next 16,
     // but make it explicit for a polling endpoint.
     { headers: { "Cache-Control": "no-store" } }

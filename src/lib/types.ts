@@ -138,6 +138,24 @@ export const FeedStoreSchema = z.object({
 
 export type FeedStore = z.infer<typeof FeedStoreSchema>;
 
+// ── Feed Comment ────────────────────────────────────────────────────────────
+
+export const FeedCommentSchema = z.object({
+  id: z.string(),
+  postId: z.string(),
+  author: z.string(),
+  text: z.string().min(1).max(500),
+  createdAt: z.string(),
+});
+
+export type FeedComment = z.infer<typeof FeedCommentSchema>;
+
+export const FeedCommentsStoreSchema = z.object({
+  comments: z.array(FeedCommentSchema).default([]),
+});
+
+export type FeedCommentsStore = z.infer<typeof FeedCommentsStoreSchema>;
+
 // ── Composed Profile ─────────────────────────────────────────────────────────
 
 export type Profile = {

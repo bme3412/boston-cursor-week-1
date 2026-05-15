@@ -1,6 +1,6 @@
 import { head, put } from "@vercel/blob";
-import { CohortSchema, ReactionsStoreSchema, CommentsStoreSchema, FeedStoreSchema } from "./types";
-import type { Cohort, Member, Reaction, ReactionsStore, Comment, CommentsStore, FeedPost, FeedStore } from "./types";
+import { CohortSchema, ReactionsStoreSchema, CommentsStoreSchema, FeedStoreSchema, FeedCommentsStoreSchema } from "./types";
+import type { Cohort, Member, Reaction, ReactionsStore, Comment, CommentsStore, FeedPost, FeedStore, FeedComment, FeedCommentsStore } from "./types";
 import cohortFallback from "@/data/cohort.json";
 import { fetchCohortHandles } from "./cohort-source";
 import { getPRStatusForWeek } from "./pr-source";
@@ -309,4 +309,52 @@ export async function saveFeed(store: FeedStore): Promise<void> {
 export async function getFeedPosts(): Promise<FeedPost[]> {
   const store = await getFeed();
   return store.posts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+// ── Feed Comments ─────────────────────────────────────────────────────────────
+
+const FEED_COMMENTS_KEY = "feed-comments.json";
+
+export async function getFeedComments(): Promise<FeedCommentsStore> {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const info = await head(FEED_COMMENTS_KEY, {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
+      const res = await fetch(info.url, { cache: "no-store" });
+      const raw = await res.json();
+      return FeedCommentsStoreSchema.parse(raw);
+    } catch {
+      // Blob doesn't exist yet
+    }
+  }
+  return { comments: [] };
+}
+
+export async function saveFeedComments(store: FeedCommentsStore): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is not set");
+  await put(FEED_COMMENTS_KEY, JSON.stringify(store, null, 2), {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    token,
+  });
+}
+
+export async function getFeedCommentsByPost(postId: string): Promise<FeedComment[]> {
+  const store = await getFeedComments();
+  return store.comments
+    .filter((c) => c.postId === postId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function getFeedCommentCounts(): Promise<Record<string, number>> {
+  const store = await getFeedComments();
+  const counts: Record<string, number> = {};
+  for (const c of store.comments) {
+    counts[c.postId] = (counts[c.postId] ?? 0) + 1;
+  }
+  return counts;
 }

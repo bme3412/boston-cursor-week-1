@@ -21,6 +21,15 @@ export function NavHeader() {
           </div>
         </Link>
         <nav className="flex items-center gap-1 overflow-x-auto">
+          <Link
+            href="/feed"
+            className={
+              buttonVariants({ variant: "ghost", size: "xs" }) +
+              " mr-2 bg-primary/10 text-primary hover:bg-primary/15 font-semibold uppercase tracking-wide"
+            }
+          >
+            Feed
+          </Link>
           {WEEKS.map((w) => (
             <Link
               key={w.week}
@@ -30,12 +39,6 @@ export function NavHeader() {
               W{w.week}
             </Link>
           ))}
-          <Link
-            href="/feed"
-            className={buttonVariants({ variant: "ghost", size: "xs" })}
-          >
-            Feed
-          </Link>
           <NavUser />
         </nav>
       </div>

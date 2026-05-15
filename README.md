@@ -4,6 +4,77 @@ Peer discovery PM tool for Cursor Boston Cohort 1. 100 builders, 6 weeks, shippi
 
 Browse what everyone's building, submit weekly updates with Loom videos, vote for the best builds on Friday.
 
+## How it works
+
+```mermaid
+flowchart LR
+    User([Builder])
+
+    subgraph Auth
+        Gate["/gate<br/>password"]
+        OAuth["GitHub OAuth"]
+    end
+
+    subgraph Pages["Next.js pages"]
+        Home["/ — cohort grid"]
+        Profile["/[handle] — profile"]
+        Week["/week/n — submissions + voting"]
+        Feed["/feed — posts + replies"]
+        Join["/join — register"]
+        Submit["/submit — weekly update"]
+    end
+
+    subgraph Routes["API routes"]
+        FeedAPI["/api/feed<br/>GET poll · POST"]
+        CmtAPI["/api/feed/:id/comments"]
+        SubAPI["/api/submit"]
+        VoteAPI["/api/vote"]
+        JoinAPI["/api/join"]
+        ReactAPI["/api/reactions"]
+        WkCmtAPI["/api/comments"]
+    end
+
+    subgraph Storage["Vercel Blob"]
+        Cohort[("cohort.json")]
+        FeedBlob[("feed.json")]
+        FeedCmt[("feed-comments.json")]
+        Comments[("comments.json")]
+        Reactions[("reactions.json")]
+    end
+
+    subgraph Upstream["Upstream sources"]
+        Roster["cohort repo folders<br/>(live roster)"]
+        PRs["cohort repo PRs<br/>(weekly shipping)"]
+        GHAPI["GitHub API<br/>(profile + events)"]
+    end
+
+    User --> Gate --> OAuth --> Pages
+
+    Home --> Profile
+    Home --> Week
+
+    Feed -. 20s poll .-> FeedAPI
+    Feed --> CmtAPI
+    Submit --> SubAPI
+    Week --> VoteAPI
+    Week --> ReactAPI
+    Week --> WkCmtAPI
+    Join --> JoinAPI
+
+    FeedAPI <--> FeedBlob
+    FeedAPI <--> FeedCmt
+    CmtAPI <--> FeedCmt
+    SubAPI --> Cohort
+    VoteAPI --> Cohort
+    JoinAPI --> Cohort
+    ReactAPI --> Reactions
+    WkCmtAPI --> Comments
+
+    Home -. live merge .-> Roster
+    Week -. live merge .-> PRs
+    Profile -.-> GHAPI
+```
+
 ## Features
 
 - **Cohort feed** (`/`) — searchable grid of every member, sorted by who shipped most recently. Green border = shipped this week.
@@ -11,7 +82,7 @@ Browse what everyone's building, submit weekly updates with Loom videos, vote fo
 - **Live PR shipping tracker** — weekly views surface submissions from upstream PRs even when the author hasn't filled out the in-app form. PR status (open / merged) shown as a badge.
 - **Profile pages** (`/[handle]`) — GitHub data merged with project info, shipping log with embedded Loom videos, stats row, humanized GitHub activity.
 - **Weekly views** (`/week/1` – `/week/6`) — full 6-week curriculum with submissions, Loom embeds, deploy links, voting, and leaderboard.
-- **Social feed** (`/feed`) — short-form posts from cohort members. Auto-polls every 20s, hover for absolute timestamp, delete your own posts, rate-limited (1 post / 10s, 20 / 24h per author).
+- **Social feed** (`/feed`) — short-form posts from cohort members with threaded replies, author hover cards (bio, location, currently-building, flair), and rich link chips (favicon + host + path). Auto-polls every 20s, sticky composer with ⌘+Enter shortcut, auto-grow textarea, char counter, link validation. Posts rate-limited (1 / 10s, 20 / 24h per author); comments rate-limited (1 / 10s, 60 / 24h). Delete your own posts and comments. Hover for absolute timestamp.
 - **Self-registration** (`/join`) — fill out a form with a PIN, instantly appear on the feed.
 - **Weekly submissions** (`/submit`) — sign in once, then submit what you shipped, Loom URL, and deploy URL.
 - **Voting** — one vote per member per week. Sign in, click "Vote" on any submission. Leaderboard updates live.
@@ -126,7 +197,7 @@ One vote per member per week. You can change your vote. Can't vote for yourself.
 
 ### `GET /api/feed` — List feed posts
 
-Returns `{ posts: FeedPost[] }`, newest first. Sent with `Cache-Control: no-store`; the client polls this every 20s.
+Returns `{ posts: FeedPost[], commentCounts: Record<postId, number> }`, newest first. Sent with `Cache-Control: no-store`; the client polls this every 20s.
 
 ### `POST /api/feed` — Create a feed post
 
@@ -144,6 +215,18 @@ Rate-limited per author: **1 post / 10s** (burst) and **20 posts / 24h**. Return
 ### `DELETE /api/feed/[id]` — Delete your own feed post
 
 Requires GitHub sign-in. `403` if the post is not yours; `404` if it does not exist.
+
+### `GET /api/feed/[id]/comments` — List replies on a post
+
+Returns `{ comments: FeedComment[] }` ordered oldest-first. Fetched lazily when a reply thread is expanded.
+
+### `POST /api/feed/[id]/comments` — Reply to a feed post
+
+Requires GitHub sign-in. Author must be a cohort member. Body: `{ "text": "Nice ship!" }` (1–500 chars). Rate-limited per author: **1 comment / 10s** (burst), **60 / 24h**. Returns `429` with `Retry-After` when over the limit.
+
+### `DELETE /api/feed/[id]/comments/[commentId]` — Delete your own reply
+
+Requires GitHub sign-in. `403` if the comment is not yours; `404` if it does not exist.
 
 ## Project structure
 
@@ -165,8 +248,10 @@ src/
       vote/route.ts          # Voting endpoint
       reactions/route.ts     # Emoji reactions
       comments/route.ts      # Comments
-      feed/route.ts          # Feed: GET (poll) + POST (rate-limited)
-      feed/[id]/route.ts     # Feed: DELETE own post
+      feed/route.ts                          # Feed: GET (poll) + POST (rate-limited)
+      feed/[id]/route.ts                     # Feed: DELETE own post
+      feed/[id]/comments/route.ts            # Feed comments: GET + POST (rate-limited)
+      feed/[id]/comments/[commentId]/route.ts # Feed comments: DELETE own reply
   auth.ts                    # NextAuth config (GitHub provider)
   components/
     session-provider.tsx     # NextAuth client wrapper
@@ -175,10 +260,13 @@ src/
     vote-button.tsx          # One-click voting
     submit-form.tsx          # Weekly update form
     join-form.tsx            # Registration form
-    member-card.tsx          # Feed card
+    member-card.tsx          # Member card
     member-grid.tsx          # Searchable grid
     loom-embed.tsx           # Loom video embed
     nav-header.tsx           # Navigation
+    feed-board.tsx           # Feed list + composer (sticky, auto-grow, ⌘+Enter)
+    feed-thread.tsx          # Inline reply thread per post
+    author-hover-card.tsx    # Hover preview: bio, location, building, flair
     footer.tsx               # Footer
   data/
     cohort.json              # Seed data + manual project metadata
